@@ -47,6 +47,9 @@ function AccountNav() {
         <NavLink to="/dashboard" className={navClass}>
           Dashboard
         </NavLink>
+        <NavLink to="/preferences" className={navClass}>
+          Preferences
+        </NavLink>
         <span className="nl-nav__user" title={user.email}>
           {user.name}
         </span>

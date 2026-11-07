@@ -5,7 +5,9 @@ import { AUTH_COOKIE_NAME, BCRYPT_ROUNDS } from './config/constants.js';
 import { connectDb, disconnectDb, getDatabaseState, onDbError } from './config/db.js';
 import { EnvValidationError, parseEnv } from './config/env.js';
 import { readVersion } from './config/version.js';
+import { Profile } from './models/Profile.js';
 import { User } from './models/User.js';
+import { createProfileRepository } from './services/profileRepository.js';
 import { createUserRepository } from './services/userRepository.js';
 import { createLogger } from './utils/logger.js';
 
@@ -34,6 +36,7 @@ const app = createApp({
   logger,
   getDatabaseState,
   userRepository: createUserRepository(),
+  profileRepository: createProfileRepository(),
   auth: {
     jwtSecret: env.jwtSecret,
     jwtExpiresInSeconds: env.jwtExpiresInSeconds,
@@ -58,6 +61,7 @@ try {
   logger.info('MongoDB connected');
   // Builds the unique email index so duplicate accounts are impossible, not just unlikely.
   await User.init();
+  await Profile.init(); // one profile per user, enforced by a unique index
 } catch (err) {
   const detail = { name: err.name, message: err.message };
   if (env.nodeEnv === 'production') {

@@ -1,3 +1,4 @@
+import PreferencesSummary from '../components/PreferencesSummary.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 function memberSince(createdAt) {
@@ -16,7 +17,7 @@ export default function Dashboard() {
       <header>
         <p className="nl-eyebrow">Dashboard</p>
         <h1 className="dashboard__title">Welcome, {firstName}.</h1>
-        <p className="dashboard__lead">You’re signed in. Scanning and preferences are not available yet.</p>
+        <p className="dashboard__lead">You’re signed in. Label scanning is not available yet.</p>
       </header>
 
       <div className="dashboard__grid">
@@ -41,16 +42,19 @@ export default function Dashboard() {
           </dl>
         </section>
 
-        <section className="dashboard__next" aria-labelledby="next-title">
-          <h2 id="next-title" className="dashboard__next-title">
-            Coming next
-          </h2>
-          <ul className="dashboard__next-list">
-            <li>Your food preferences and allergens</li>
-            <li>Label photo upload and reading</li>
-            <li>Scores with a “Why” explanation</li>
-          </ul>
-        </section>
+        <div className="dashboard__stack">
+          <PreferencesSummary />
+
+          <section className="dashboard__next" aria-labelledby="next-title">
+            <h2 id="next-title" className="dashboard__next-title">
+              Coming next
+            </h2>
+            <ul className="dashboard__next-list">
+              <li>Label photo upload and reading</li>
+              <li>Scores with a “Why” explanation</li>
+            </ul>
+          </section>
+        </div>
       </div>
     </section>
   );

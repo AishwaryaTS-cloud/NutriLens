@@ -35,7 +35,7 @@ export default function Register() {
     setSubmitting(true);
     try {
       await register({ name: values.name, email: values.email, password: values.password });
-      navigate('/dashboard', { replace: true });
+      navigate('/preferences', { replace: true, state: { onboarding: true } });
     } catch (err) {
       const apiError = toApiError(err);
       setFieldErrors(apiError.fieldErrors);
