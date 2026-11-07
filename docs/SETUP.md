@@ -46,8 +46,8 @@ Commit the generated `package-lock.json` (CI uses `npm ci`).
 npm test
 npm run build
 ```
-Two extra database tests are skipped unless you point them at a throwaway database whose name ends
-in `_test` (the suite drops it afterwards):
+Some tests need a real MongoDB (unique indexes, saved profiles, renaming). They are skipped unless you
+point them at a throwaway database whose name ends in `_test` (the suite drops it afterwards):
 ```bash
 TEST_MONGODB_URI=mongodb://127.0.0.1:27018/nutrilens_test npm test -w server
 ```

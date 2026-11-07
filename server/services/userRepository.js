@@ -18,5 +18,10 @@ export function createUserRepository(UserModel = User) {
     create(data) {
       return UserModel.create(data);
     },
+    /** Phase 2: display-name edits. Returns the updated user (without passwordHash) or null. */
+    async updateName(id, name) {
+      if (!mongoose.isValidObjectId(id)) return null;
+      return UserModel.findByIdAndUpdate(id, { $set: { name } }, { new: true, runValidators: true });
+    },
   };
 }

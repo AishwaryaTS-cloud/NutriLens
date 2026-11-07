@@ -46,7 +46,15 @@ export function AuthProvider({ children }) {
     setState(SIGNED_OUT);
   }, []);
 
-  const value = useMemo(() => ({ ...state, login, register, logout }), [state, login, register, logout]);
+  // Phase 2: lets the profile page refresh the signed-in user after a name change.
+  const updateUser = useCallback((user) => {
+    setState((current) => (current.status === 'authenticated' ? { ...current, user } : current));
+  }, []);
+
+  const value = useMemo(
+    () => ({ ...state, login, register, logout, updateUser }),
+    [state, login, register, logout, updateUser],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

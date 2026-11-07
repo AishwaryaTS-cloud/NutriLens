@@ -1,18 +1,20 @@
 import cors from 'cors';
 import express from 'express';
-import { API_PREFIX, AUTH_PREFIX } from './config/constants.js';
+import { API_PREFIX, AUTH_PREFIX, PROFILE_PREFIX } from './config/constants.js';
 import { createErrorHandler, notFound } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { securityHeaders } from './middleware/securityHeaders.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHealthRouter } from './routes/health.js';
+import { createProfileRouter } from './routes/profile.js';
 import { createAuthService } from './services/authService.js';
+import { createProfileService } from './services/profileService.js';
 
 const DEFAULT_RATE_LIMIT = { windowMs: 15 * 60 * 1000, max: 30 };
 
 /**
  * `auth` = { jwtSecret, jwtExpiresInSeconds, bcryptRounds, cookie: { name, secure, sameSite, maxAgeMs } }
- * `userRepository` is injected so tests can use an in-memory store.
+ * `userRepository` and `profileRepository` are injected so tests can use in-memory stores.
  */
 export function createApp({
   clientOrigin,
@@ -21,6 +23,7 @@ export function createApp({
   logger,
   getDatabaseState,
   userRepository,
+  profileRepository,
   auth,
   authRateLimit = DEFAULT_RATE_LIMIT,
 }) {
@@ -53,6 +56,12 @@ export function createApp({
   app.use(
     AUTH_PREFIX,
     createAuthRouter({ authService, cookie: auth.cookie, clientOrigin, rateLimit: authRateLimit }),
+  );
+
+  const profileService = createProfileService({ profileRepository, userRepository });
+  app.use(
+    PROFILE_PREFIX,
+    createProfileRouter({ profileService, authService, cookieName: auth.cookie.name, clientOrigin }),
   );
 
   app.use(notFound);

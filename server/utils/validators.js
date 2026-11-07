@@ -50,3 +50,12 @@ export function validateLogin(input) {
 
   return result(errors, { email, password });
 }
+
+/** Display-name update (Phase 2): the same rule as registration. */
+export function validateName(input) {
+  const body = input !== null && typeof input === 'object' ? input : {};
+  const name = cleanText(body.name);
+  const errors = {};
+  if (name.length < 2 || name.length > 60) errors.name = 'Enter your name (2 to 60 characters).';
+  return result(errors, { name });
+}

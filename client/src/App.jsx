@@ -6,6 +6,7 @@ import DesignSystem from './pages/DesignSystem.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
+import Preferences from './pages/Preferences.jsx';
 import Register from './pages/Register.jsx';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         </Route>
         <Route element={<ProtectedRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="preferences" element={<Preferences />} />
         </Route>
         {import.meta.env.DEV && <Route path="design-system" element={<DesignSystem />} />}
         <Route path="*" element={<NotFound />} />
