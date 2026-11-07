@@ -26,7 +26,14 @@ The API also starts without a database (it reports "degraded"), so you can skip 
 ## 4. Install and run
 ```bash
 npm install
-cp .env.example .env        # then edit MONGODB_URI if you use Atlas
+cp .env.example .env
+```
+Edit `.env`:
+1. Set `JWT_SECRET` to a long random value. The API refuses to start until you do. Generate one with
+   `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
+2. Set `MONGODB_URI` if you use Atlas instead of local MongoDB.
+
+```bash
 npm run dev
 ```
 - Web app: http://localhost:5173
@@ -39,6 +46,17 @@ Commit the generated `package-lock.json` (CI uses `npm ci`).
 npm test
 npm run build
 ```
+Two extra database tests are skipped unless you point them at a throwaway database whose name ends
+in `_test` (the suite drops it afterwards):
+```bash
+TEST_MONGODB_URI=mongodb://127.0.0.1:27018/nutrilens_test npm test -w server
+```
+
+## 6. Cookie settings for deployment
+- Same site (the Vite proxy in development, or one domain behind a reverse proxy): keep
+  `COOKIE_SAME_SITE=lax`.
+- App and API on different sites: set `COOKIE_SAME_SITE=none` and `COOKIE_SECURE=true`, serve both over
+  HTTPS, and set `CLIENT_ORIGIN` to the exact app origin.
 
 Redis, Gemini keys and deployment steps are added in the phases
 that first need them.

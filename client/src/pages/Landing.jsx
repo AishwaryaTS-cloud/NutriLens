@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import ScanPreview from '../components/ScanPreview.jsx';
 import StatusPanel from '../components/StatusPanel.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useHealth } from '../hooks/useHealth.js';
 
 const PLANNED_STEPS = [
@@ -13,6 +14,7 @@ const PLANNED_STEPS = [
 
 export default function Landing() {
   const { view, health, latencyMs, isFetching, recheck } = useHealth();
+  const { status } = useAuth();
 
   return (
     <>
@@ -28,16 +30,30 @@ export default function Landing() {
           </p>
           <p className="hero__note">
             <Icon name="minus" size={18} />
-            Foundation build. Sign-in and scanning are not available yet.
+            Foundation build. Accounts work; scanning is not available yet.
           </p>
           <div className="hero__actions">
-            <button type="button" className="nl-btn nl-btn--primary" onClick={recheck} disabled={isFetching}>
+            {status === 'authenticated' ? (
+              <Link to="/dashboard" className="nl-btn nl-btn--primary">
+                Go to dashboard
+                <Icon name="arrow" size={18} />
+              </Link>
+            ) : (
+              <>
+                <Link to="/register" className="nl-btn nl-btn--primary">
+                  Create account
+                </Link>
+                <Link to="/login" className="nl-btn nl-btn--outline">
+                  Log in
+                </Link>
+              </>
+            )}
+            <button type="button" className="nl-btn nl-btn--ghost" onClick={recheck} disabled={isFetching}>
               {isFetching ? 'Checking…' : 'Check system status'}
             </button>
             {import.meta.env.DEV && (
-              <Link to="/design-system" className="nl-btn nl-btn--outline">
+              <Link to="/design-system" className="nl-btn nl-btn--ghost">
                 Design system
-                <Icon name="arrow" size={18} />
               </Link>
             )}
           </div>

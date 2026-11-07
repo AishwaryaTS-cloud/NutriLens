@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
+import { AUTH_COOKIE_NAME, BCRYPT_ROUNDS } from './config/constants.js';
 import { connectDb, disconnectDb, getDatabaseState, onDbError } from './config/db.js';
 import { EnvValidationError, parseEnv } from './config/env.js';
 import { readVersion } from './config/version.js';
+import { User } from './models/User.js';
+import { createUserRepository } from './services/userRepository.js';
 import { createLogger } from './utils/logger.js';
 
 // One .env file in the project root is shared by the server and the Vite client.
@@ -30,6 +33,18 @@ const app = createApp({
   version,
   logger,
   getDatabaseState,
+  userRepository: createUserRepository(),
+  auth: {
+    jwtSecret: env.jwtSecret,
+    jwtExpiresInSeconds: env.jwtExpiresInSeconds,
+    bcryptRounds: BCRYPT_ROUNDS,
+    cookie: {
+      name: AUTH_COOKIE_NAME,
+      secure: env.cookieSecure,
+      sameSite: env.cookieSameSite,
+      maxAgeMs: env.jwtExpiresInSeconds * 1000,
+    },
+  },
 });
 
 const server = app.listen(env.port, () => {
@@ -41,6 +56,8 @@ onDbError((err) => logger.error('MongoDB connection error', { name: err.name, me
 try {
   await connectDb(env.mongoUri);
   logger.info('MongoDB connected');
+  // Builds the unique email index so duplicate accounts are impossible, not just unlikely.
+  await User.init();
 } catch (err) {
   const detail = { name: err.name, message: err.message };
   if (env.nodeEnv === 'production') {
