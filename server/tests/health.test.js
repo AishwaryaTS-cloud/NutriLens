@@ -1,19 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createApp } from '../app.js';
-import { createLogger } from '../utils/logger.js';
-import { request, withServer } from './helpers.js';
+import { TEST_ORIGIN, makeTestApp, request, withServer } from './helpers.js';
 
-const ORIGIN = 'http://localhost:5173';
+const ORIGIN = TEST_ORIGIN;
 
 function makeApp(database) {
-  return createApp({
-    clientOrigin: ORIGIN,
-    environment: 'test',
-    version: '0.0.0-test',
-    logger: createLogger({ silent: true }),
-    getDatabaseState: () => database,
-  });
+  return makeTestApp({ database }).app;
 }
 
 describe('GET /api/v1/health', () => {
@@ -50,6 +42,34 @@ describe('GET /api/v1/health', () => {
 
       const other = await request(url, '/api/v1/health', { headers: { Origin: 'https://evil.example' } });
       assert.equal(other.headers['access-control-allow-origin'], undefined);
+      assert.equal(other.headers['access-control-allow-credentials'], undefined);
+    }));
+
+  it('sends no CORS headers when there is no Origin header', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const res = await request(url, '/api/v1/health');
+      assert.equal(res.status, 200);
+      assert.equal(res.headers['access-control-allow-origin'], undefined);
+    }));
+
+  it('answers preflight requests only for the configured origin', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const preflight = (origin) =>
+        request(url, '/api/auth/login', {
+          method: 'OPTIONS',
+          headers: {
+            Origin: origin,
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'content-type',
+          },
+        });
+      const allowed = await preflight(ORIGIN);
+      assert.equal(allowed.status, 204);
+      assert.equal(allowed.headers['access-control-allow-origin'], ORIGIN);
+      assert.equal(allowed.headers['access-control-allow-credentials'], 'true');
+
+      const blocked = await preflight('https://evil.example');
+      assert.equal(blocked.headers['access-control-allow-origin'], undefined);
     }));
 });
 

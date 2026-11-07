@@ -351,3 +351,122 @@
     font-size: var(--text-lg);
   }
 }
+
+/* ---------- Authentication pages ---------- */
+.auth {
+  display: grid;
+  gap: var(--space-7);
+  padding-block: var(--space-8) var(--space-9);
+}
+
+.auth__aside > * {
+  animation: nl-rise var(--dur-slow) var(--ease) both;
+}
+
+.auth__aside > :nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.auth__aside > :nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.auth__title {
+  max-width: 14ch;
+  font-size: var(--text-3xl);
+  line-height: 1;
+}
+
+.auth__lead {
+  max-width: 44ch;
+  margin-top: var(--space-4);
+  color: var(--ink-soft);
+  font-size: var(--text-lg);
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--space-5);
+  animation: nl-rise var(--dur-slow) var(--ease) 120ms both;
+}
+
+.auth__form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.auth__switch {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--rule-medium) solid var(--ink);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.auth__switch a {
+  font-weight: 600;
+}
+
+/* ---------- Dashboard ---------- */
+.dashboard {
+  display: grid;
+  gap: var(--space-7);
+  padding-block: var(--space-8) var(--space-9);
+}
+
+.dashboard__title {
+  font-size: var(--text-3xl);
+}
+
+.dashboard__lead {
+  margin-top: var(--space-3);
+  color: var(--ink-soft);
+  font-size: var(--text-lg);
+}
+
+.dashboard__grid {
+  display: grid;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.dashboard__next {
+  padding: var(--space-4) 0 0;
+  border-top: var(--rule-medium) solid var(--ink);
+}
+
+.dashboard__next-title {
+  font-size: var(--text-xl);
+}
+
+.dashboard__next-list {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  color: var(--ink-soft);
+}
+
+.dashboard__next-list li {
+  padding-left: var(--space-4);
+  border-left: var(--rule-medium) solid var(--line);
+}
+
+@media (min-width: 60rem) {
+  .auth {
+    grid-template-columns: 1fr minmax(22rem, 28rem);
+    align-items: start;
+    padding-block: var(--space-9);
+  }
+
+  .dashboard__grid {
+    grid-template-columns: minmax(20rem, 28rem) 1fr;
+    gap: var(--space-8);
+  }
+
+  .dashboard__next {
+    padding-left: var(--space-6);
+    border-top: 0;
+    border-left: var(--rule-medium) solid var(--ink);
+  }
+}

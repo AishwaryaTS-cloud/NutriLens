@@ -1,5 +1,7 @@
-function errorBody(code, message) {
-  return { error: { code, message } };
+import { HttpError } from '../utils/httpError.js';
+
+function errorBody(code, message, details) {
+  return { error: { code, message, ...(details ? { details } : {}) } };
 }
 
 export function notFound(req, res) {
@@ -11,6 +13,10 @@ export function createErrorHandler(logger) {
   return (err, _req, res, next) => {
     if (res.headersSent) {
       next(err);
+      return;
+    }
+    if (err instanceof HttpError) {
+      res.status(err.status).json(errorBody(err.code, err.message, err.details));
       return;
     }
     if (err?.type === 'entity.parse.failed') {

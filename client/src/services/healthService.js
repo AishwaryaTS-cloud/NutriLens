@@ -16,7 +16,7 @@ function isHealthPayload(data) {
 
 export async function fetchHealth() {
   const startedAt = performance.now();
-  const { data } = await api.get('/health');
+  const { data } = await api.get('/v1/health');
   const latencyMs = Math.round(performance.now() - startedAt);
   // Never trust an unexpected shape (for example an HTML error page from a proxy).
   if (!isHealthPayload(data)) throw new Error('Unexpected response from the health endpoint.');

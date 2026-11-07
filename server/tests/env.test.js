@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { EnvValidationError, parseEnv } from '../config/env.js';
 
-const valid = { MONGODB_URI: 'mongodb://127.0.0.1:27017/nutrilens' };
+const SECRET = 'a-long-random-secret-for-tests-0123456789';
+const valid = { MONGODB_URI: 'mongodb://127.0.0.1:27018/nutrilens', JWT_SECRET: SECRET };
 
 function catchError(fn) {
   try {
@@ -13,7 +14,7 @@ function catchError(fn) {
   return undefined;
 }
 
-describe('parseEnv', () => {
+describe('parseEnv (Phase 0 behaviour)', () => {
   it('applies safe defaults', () => {
     const env = parseEnv(valid);
     assert.equal(env.nodeEnv, 'development');
@@ -22,12 +23,12 @@ describe('parseEnv', () => {
   });
 
   it('requires MONGODB_URI', () => {
-    assert.ok(catchError(() => parseEnv({})) instanceof EnvValidationError);
+    assert.ok(catchError(() => parseEnv({ JWT_SECRET: SECRET })) instanceof EnvValidationError);
   });
 
   it('rejects a non-MongoDB URI without echoing its contents', () => {
     const error = catchError(() =>
-      parseEnv({ MONGODB_URI: 'postgres://admin:hunter2@db.example.com/app' }),
+      parseEnv({ ...valid, MONGODB_URI: 'postgres://admin:hunter2@db.example.com/app' }),
     );
     assert.ok(error instanceof EnvValidationError);
     assert.match(error.message, /MONGODB_URI/);
@@ -39,14 +40,57 @@ describe('parseEnv', () => {
   });
 
   it('rejects an invalid CLIENT_ORIGIN and an unknown NODE_ENV', () => {
-    assert.ok(
-      catchError(() => parseEnv({ ...valid, CLIENT_ORIGIN: 'not a url' })) instanceof EnvValidationError,
-    );
+    assert.ok(catchError(() => parseEnv({ ...valid, CLIENT_ORIGIN: 'not a url' })) instanceof EnvValidationError);
     assert.ok(catchError(() => parseEnv({ ...valid, NODE_ENV: 'staging' })) instanceof EnvValidationError);
   });
 
   it('normalises CLIENT_ORIGIN so CORS matches exactly', () => {
     const env = parseEnv({ ...valid, CLIENT_ORIGIN: 'https://app.example.com/' });
     assert.equal(env.clientOrigin, 'https://app.example.com');
+  });
+});
+
+describe('parseEnv (authentication settings)', () => {
+  it('requires a JWT_SECRET of at least 32 characters', () => {
+    assert.ok(catchError(() => parseEnv({ MONGODB_URI: valid.MONGODB_URI })) instanceof EnvValidationError);
+    assert.ok(catchError(() => parseEnv({ ...valid, JWT_SECRET: 'too-short' })) instanceof EnvValidationError);
+  });
+
+  it('never echoes the secret in an error message', () => {
+    const short = 'hunter2-secret';
+    const error = catchError(() => parseEnv({ ...valid, JWT_SECRET: short }));
+    assert.doesNotMatch(error.message, /hunter2/);
+  });
+
+  it('rejects the .env.example placeholder', () => {
+    const placeholder = 'replace-with-at-least-32-random-characters';
+    assert.ok(catchError(() => parseEnv({ ...valid, JWT_SECRET: placeholder })) instanceof EnvValidationError);
+  });
+
+  it('defaults to a 7 day token and a lax, HTTP-only-friendly cookie', () => {
+    const env = parseEnv(valid);
+    assert.equal(env.jwtExpiresInSeconds, 7 * 86400);
+    assert.equal(env.cookieSameSite, 'lax');
+    assert.equal(env.cookieSecure, false);
+  });
+
+  it('makes the cookie Secure by default in production', () => {
+    assert.equal(parseEnv({ ...valid, NODE_ENV: 'production' }).cookieSecure, true);
+  });
+
+  it('parses JWT_EXPIRES_IN in minutes, hours and days and rejects other formats', () => {
+    assert.equal(parseEnv({ ...valid, JWT_EXPIRES_IN: '30m' }).jwtExpiresInSeconds, 1800);
+    assert.equal(parseEnv({ ...valid, JWT_EXPIRES_IN: '12h' }).jwtExpiresInSeconds, 43200);
+    assert.ok(catchError(() => parseEnv({ ...valid, JWT_EXPIRES_IN: 'forever' })) instanceof EnvValidationError);
+    assert.ok(catchError(() => parseEnv({ ...valid, JWT_EXPIRES_IN: '0d' })) instanceof EnvValidationError);
+  });
+
+  it('refuses SameSite=None without Secure, and unknown SameSite values', () => {
+    assert.ok(
+      catchError(() => parseEnv({ ...valid, COOKIE_SAME_SITE: 'none', COOKIE_SECURE: 'false' })) instanceof
+        EnvValidationError,
+    );
+    assert.equal(parseEnv({ ...valid, COOKIE_SAME_SITE: 'none', COOKIE_SECURE: 'true' }).cookieSameSite, 'none');
+    assert.ok(catchError(() => parseEnv({ ...valid, COOKIE_SAME_SITE: 'sometimes' })) instanceof EnvValidationError);
   });
 });

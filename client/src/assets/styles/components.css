@@ -267,3 +267,117 @@
   background: var(--score-poor);
   color: var(--on-poor);
 }
+
+/* ---------- Forms ---------- */
+.nl-btn--block {
+  width: 100%;
+}
+
+.nl-field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.nl-field__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.nl-field__control {
+  position: relative;
+}
+
+.nl-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+.nl-input:hover {
+  background: var(--surface-muted);
+}
+
+.nl-input:focus {
+  background: var(--surface);
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 28%, transparent);
+  outline: none;
+}
+
+.nl-field.has-error .nl-input {
+  border-color: var(--chilli);
+}
+
+.nl-field.has-error .nl-input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chilli) 28%, transparent);
+}
+
+.nl-field__control:has(.nl-field__toggle) .nl-input {
+  padding-right: 3.25rem;
+}
+
+.nl-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.nl-field__toggle:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.nl-field__hint {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.nl-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--chilli-strong);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  animation: nl-rise var(--dur) var(--ease) both;
+}
+
+.nl-field__error .nl-icon {
+  margin-top: 2px;
+}
+
+.nl-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--chilli);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--chilli) 10%, var(--surface));
+  font-size: var(--text-sm);
+  font-weight: 500;
+  animation: nl-rise var(--dur) var(--ease) both;
+}
+
+.nl-alert .nl-icon {
+  margin-top: 1px;
+  color: var(--chilli-strong);
+}
