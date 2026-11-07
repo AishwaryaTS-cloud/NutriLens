@@ -1,0 +1,269 @@
+/* ---------- Icons ---------- */
+.nl-icon {
+  flex-shrink: 0;
+}
+
+.nl-spin {
+  animation: nl-spin 0.9s linear infinite;
+}
+
+@keyframes nl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Typography helpers ---------- */
+.nl-eyebrow {
+  margin-bottom: var(--space-3);
+  color: var(--leaf);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Buttons ---------- */
+.nl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.nl-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-1);
+}
+
+.nl-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.nl-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nl-btn--primary {
+  background: var(--leaf);
+  color: var(--on-leaf);
+}
+
+.nl-btn--primary:hover:not(:disabled) {
+  background: var(--leaf-strong);
+  color: var(--on-leaf);
+}
+
+.nl-btn--secondary {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.nl-btn--secondary:hover:not(:disabled) {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.nl-btn--outline {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.nl-btn--outline:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.nl-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.nl-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.nl-btn--danger {
+  background: var(--chilli);
+  color: var(--on-chilli);
+}
+
+.nl-btn--danger:hover:not(:disabled) {
+  background: var(--chilli-strong);
+  color: var(--on-chilli);
+}
+
+.nl-btn--sm {
+  min-height: 36px;
+  padding: 0 var(--space-4);
+}
+
+.nl-btn--lg {
+  min-height: 52px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+}
+
+.nl-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.nl-icon-btn:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.nl-icon-btn:active {
+  transform: scale(0.94);
+}
+
+/* ---------- Label panel (nutrition-label look) ---------- */
+.nl-label {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+
+.nl-label__title {
+  font-size: var(--text-2xl);
+  line-height: 1;
+}
+
+.nl-rule {
+  background: var(--ink);
+}
+
+.nl-rule--heavy {
+  height: var(--rule-heavy);
+  margin-block: var(--space-3);
+}
+
+.nl-rule--medium {
+  height: var(--rule-medium);
+}
+
+.nl-label__rows {
+  font-size: var(--text-sm);
+}
+
+.nl-label__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-2);
+  border-bottom: var(--rule-thin) solid var(--line);
+}
+
+.nl-label__row:last-child {
+  border-bottom: 0;
+}
+
+.nl-label__row dt {
+  color: var(--ink-soft);
+}
+
+.nl-label__row dd {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---------- Status message (icon + text, never colour alone) ---------- */
+.nl-status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.nl-status .nl-icon {
+  margin-top: 2px;
+}
+
+.nl-status__title {
+  font-weight: 600;
+}
+
+.nl-status__detail {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.nl-status--ok .nl-icon {
+  color: var(--leaf);
+}
+
+.nl-status--warn .nl-icon {
+  color: var(--score-caution);
+}
+
+.nl-status--error .nl-icon {
+  color: var(--chilli);
+}
+
+.nl-status--pending .nl-icon {
+  color: var(--ink-soft);
+}
+
+/* ---------- Outcome chips ---------- */
+.nl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.nl-chip--good {
+  background: var(--score-good);
+  color: var(--on-good);
+}
+
+.nl-chip--fair {
+  background: var(--score-fair);
+  color: var(--on-fair);
+}
+
+.nl-chip--caution {
+  background: var(--score-caution);
+  color: var(--on-caution);
+}
+
+.nl-chip--poor {
+  background: var(--score-poor);
+  color: var(--on-poor);
+}

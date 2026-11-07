@@ -1,0 +1,24 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Phase 0: CI only (free for public repositories). No secrets are needed: tests never touch
+# MongoDB Atlas, Redis, Gemini or any other external service.
+# The CD job (Docker image, AWS ECR/ECS) is added in Phase 13.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Requires a committed package-lock.json (created by the first `npm install`).
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

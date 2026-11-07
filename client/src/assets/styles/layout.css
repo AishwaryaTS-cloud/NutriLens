@@ -1,0 +1,80 @@
+.nl-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.nl-main {
+  flex: 1;
+}
+
+.nl-container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+/* Header: the heavy rule under it echoes the top of a nutrition label */
+.nl-header {
+  border-bottom: var(--rule-heavy) solid var(--ink);
+  background: var(--bg);
+}
+
+.nl-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.nl-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--leaf);
+  text-decoration: none;
+}
+
+.nl-brand__name {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.nl-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.nl-nav__link {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.nl-nav__link:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.nl-nav__link.is-active {
+  color: var(--ink);
+  background: var(--surface-muted);
+  box-shadow: inset 0 -3px 0 var(--leaf);
+}
+
+.nl-footer {
+  border-top: var(--rule-thin) solid var(--line);
+  padding-block: var(--space-4);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}

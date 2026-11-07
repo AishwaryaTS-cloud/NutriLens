@@ -1,0 +1,36 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+
+# Secrets and local configuration: NEVER commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.crt
+credentials*.json
+service-account*.json
+
+# Local data and uploads (user data must never reach a public repo)
+uploads/
+data/
+dump/
+*.bson
+*.sqlite
+*.db
+
+# Tooling and OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+playwright-report/
+test-results/

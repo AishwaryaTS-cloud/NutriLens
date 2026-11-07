@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import { createApp } from '../app.js';
+import { createLogger } from '../utils/logger.js';
+import { request, withServer } from './helpers.js';
+
+const ORIGIN = 'http://localhost:5173';
+
+function makeApp(database) {
+  return createApp({
+    clientOrigin: ORIGIN,
+    environment: 'test',
+    version: '0.0.0-test',
+    logger: createLogger({ silent: true }),
+    getDatabaseState: () => database,
+  });
+}
+
+describe('GET /api/v1/health', () => {
+  it('reports ok when the database is connected', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const res = await request(url, '/api/v1/health');
+      assert.equal(res.status, 200);
+      assert.equal(res.json.status, 'ok');
+      assert.equal(res.json.checks.database, 'connected');
+      assert.equal(res.json.version, '0.0.0-test');
+      assert.equal(res.json.service, 'nutrilens-api');
+      assert.ok(Number.isFinite(Date.parse(res.json.timestamp)));
+    }));
+
+  it('reports degraded (still HTTP 200) when the database is down', () =>
+    withServer(makeApp('disconnected'), async (url) => {
+      const res = await request(url, '/api/v1/health');
+      assert.equal(res.status, 200);
+      assert.equal(res.json.status, 'degraded');
+    }));
+
+  it('is never cached', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const res = await request(url, '/api/v1/health');
+      assert.equal(res.headers['cache-control'], 'no-store');
+    }));
+
+  it('allows only the configured client origin and sets security headers', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const allowed = await request(url, '/api/v1/health', { headers: { Origin: ORIGIN } });
+      assert.equal(allowed.headers['access-control-allow-origin'], ORIGIN);
+      assert.equal(allowed.headers['x-powered-by'], undefined);
+      assert.equal(allowed.headers['x-content-type-options'], 'nosniff');
+
+      const other = await request(url, '/api/v1/health', { headers: { Origin: 'https://evil.example' } });
+      assert.equal(other.headers['access-control-allow-origin'], undefined);
+    }));
+});
+
+describe('error handling', () => {
+  it('returns the error envelope for unknown routes', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const res = await request(url, '/api/v1/nope');
+      assert.equal(res.status, 404);
+      assert.equal(res.json.error.code, 'NOT_FOUND');
+    }));
+
+  it('returns the error envelope for malformed JSON', () =>
+    withServer(makeApp('connected'), async (url) => {
+      const res = await request(url, '/api/v1/health', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{not json',
+      });
+      assert.equal(res.status, 400);
+      assert.equal(res.json.error.code, 'INVALID_JSON');
+    }));
+});
