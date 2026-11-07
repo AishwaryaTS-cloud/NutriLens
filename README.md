@@ -1,8 +1,6 @@
 # NutriLens
 
 AI-powered food label intelligence platform: "See what's really on the label."
-Pure MERN in JavaScript (React + Vite, Node + Express, MongoDB + Mongoose), built to run on free
-tiers. See `docs/FREE_TIER.md`.
 
 **Status: Phase 2 (profile and personalization).** Register, log in, log out, a protected dashboard and a
 preferences page (dietary preference, nutrient priorities, allergens, display name) work. There is no scanning yet. The landing page still shows live web app, API and database status.
@@ -60,3 +58,4 @@ See `docs/SETUP.md`.
 ## Security
 - Never commit `.env` files, keys, connection strings or user data. `.gitignore` blocks them; only `.env.example` is tracked.
 - The API validates its environment at start-up and never prints secret values in errors.
+
