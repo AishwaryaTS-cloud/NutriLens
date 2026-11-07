@@ -35,6 +35,3 @@ bcryptjs (12 rounds) and the hash never leaves the server. The Phase 0 health ch
 ## Quick start
 See `docs/SETUP.md`.
 
-## Security
-- Never commit `.env` files, keys, connection strings or user data. `.gitignore` blocks them; only `.env.example` is tracked.
-- The API validates its environment at start-up and never prints secret values in errors.
