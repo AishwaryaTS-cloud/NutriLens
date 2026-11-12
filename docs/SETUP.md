@@ -52,7 +52,26 @@ point them at a throwaway database whose name ends in `_test` (the suite drops i
 TEST_MONGODB_URI=mongodb://127.0.0.1:27018/nutrilens_test npm test -w server
 ```
 
-## 6. Cookie settings for deployment
+## 6. Label scanning with Gemini Vision
+- Get a free key in Google AI Studio and put it in `.env` as `GEMINI_API_KEY`. The key stays on the server.
+  Do not enable billing. Without a key the app runs, but you can only type label values by hand.
+- `GEMINI_MODEL` (default `gemini-2.5-flash`) must support image input and JSON output. Check model
+  availability and free-tier limits in AI Studio and change it if needed.
+- Other settings: `MAX_UPLOAD_MB` (1 to 10, default 5), `GEMINI_TIMEOUT_MS` (5000 to 120000, default 45000) and
+  `GEMINI_DAILY_LIMIT` (0 = no cap).
+- No internet downloads or cache folders are needed: there is no OCR engine, and Sharp only validates and resizes
+  the picture before it is sent to Gemini.
+- Automated tests never call Gemini: its answers are mocked. A real label read needs your key and internet.
+
+## 7. Installing dependencies
+```bash
+npm install     # or: npm ci
+npm test
+npm run build
+```
+Use Node 20.11 or newer. Sharp downloads a prebuilt binary for your platform during install.
+
+## 8. Cookie settings for deployment
 - Same site (the Vite proxy in development, or one domain behind a reverse proxy): keep
   `COOKIE_SAME_SITE=lax`.
 - App and API on different sites: set `COOKIE_SAME_SITE=none` and `COOKIE_SECURE=true`, serve both over

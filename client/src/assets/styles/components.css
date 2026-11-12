@@ -535,3 +535,66 @@
   background: var(--surface-muted);
   color: var(--chilli-strong);
 }
+
+/* ---------- Phase 3: textarea and progress bar (appended; nothing above is changed) ---------- */
+.nl-textarea {
+  display: block;
+  width: 100%;
+  min-height: 12rem;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+.nl-textarea:hover:not([readonly]) {
+  background: var(--surface-muted);
+}
+
+.nl-textarea:focus {
+  background: var(--surface);
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--leaf) 28%, transparent);
+  outline: none;
+}
+
+.nl-textarea[readonly] {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.nl-progress {
+  height: 8px;
+  margin-block: var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.nl-progress span {
+  display: block;
+  height: 100%;
+  background: var(--leaf);
+  transition: width var(--dur) var(--ease);
+}
+
+.nl-progress span.is-indeterminate {
+  width: 40% !important;
+  animation: nl-slide 1.4s var(--ease) infinite;
+}
+
+@keyframes nl-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(260%);
+  }
+}

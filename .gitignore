@@ -4,7 +4,6 @@ dist/
 build/
 coverage/
 .vite/
-.cache/
 
 # Secrets and local configuration: NEVER commit these
 .env
