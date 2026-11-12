@@ -47,6 +47,12 @@ function AccountNav() {
         <NavLink to="/dashboard" className={navClass}>
           Dashboard
         </NavLink>
+        <NavLink to="/scan" className={navClass}>
+          Scan
+        </NavLink>
+        <NavLink to="/history" className={navClass}>
+          History
+        </NavLink>
         <NavLink to="/preferences" className={navClass}>
           Preferences
         </NavLink>
@@ -103,7 +109,7 @@ export default function Layout() {
 
       <footer className="nl-footer">
         <div className="nl-container">
-          <p>NutriLens foundation build. Accounts are live; label scanning arrives in the next phases.</p>
+          <p>NutriLens foundation build. Accounts, preferences and label reading are live; analysis arrives in the next phases.</p>
         </div>
       </footer>
     </div>

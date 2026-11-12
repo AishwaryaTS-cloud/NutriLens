@@ -1,15 +1,18 @@
-# ai/ : OCR and label analysis pipeline
+# ai/ : label analysis modules
 
-Folder layout follows the synopsis. Each folder is filled in during its planned phase; Phase 0
-contains no pipeline code.
+Pure JavaScript modules used by the Express server (`server/services/scanService.js`). There is **no OCR engine**:
+the label image is sent to Gemini Vision, and everything after that is validated, deterministic code.
 
-| Folder | Planned content | Planned phase |
-|---|---|---|
-| `ocr/` | `imagePreprocessor.js` (Sharp), `ocrService.js` (Tesseract.js) | 3-6 |
-| `parsers/` | nutrition, ingredient and claim parsers | 3-6 |
-| `allergens/` | `allergenDetector.js` | 3-6 |
-| `scoring/` | `matchScore.js` (Personal Match Score, Label Quality Score) | 3-6 |
-| `rag/` | retriever, embeddings, generator (Gemini) | 7-10 |
-| `knowledge-base/` | food and nutrition information | 7-10 |
-| `workflow/` | `analysisWorkflow.js` (LangGraph or custom, to be confirmed) | 7-10 |
-| `labelAnalysis.js` | main analysis entry point | 3-6 |
+| Folder | Purpose |
+|---|---|
+| `gemini/` | `geminiClient.js` (REST client, error classes), `labelExtractor.js` (image to structured JSON), `explainer.js` (explains calculated results, with a rule-based fallback) |
+| `nutrition/` | `labelValidator.js` (types, units, ranges, per-serving to per-100 g, conflicts), `nutrients.js` |
+| `scoring/` | `config.js` (**every threshold, score and weight**), `nutrientScores.js`, `allergenPenalty.js`, `personalMatch.js` |
+| `ingredients/` | `ingredientParser.js`, `ingredientScore.js` |
+| `allergens/` | `allergenData.js` (keyword lists), `allergenDetector.js` |
+| `analysis/` | `analyseLabel.js`: the single entry point for scans, saved scans and comparisons |
+| `explanations/` | `facts.js` (verified facts sent to Gemini), `ruleBased.js` (explanations without AI) |
+
+Rules: Gemini reads the image and later explains the results. It never calculates or changes a score, a
+classification or a penalty. See `docs/SCORING.md`. `ai/package.json` only marks these files as ES modules;
+dependencies (such as Sharp) are declared in `server/package.json`.

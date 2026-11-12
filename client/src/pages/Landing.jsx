@@ -7,7 +7,7 @@ import { useHealth } from '../hooks/useHealth.js';
 
 const PLANNED_STEPS = [
   { title: 'Photograph the label', text: 'Take a photo or upload one. Blurry or unreadable photos are caught early.' },
-  { title: 'Read it', text: 'The label text is read with OCR and turned into nutrition values and ingredients.' },
+  { title: 'Read it', text: 'Gemini reads the label photo directly and returns nutrition values and ingredients for you to check.' },
   { title: 'Check it', text: 'Allergens, marketing claims and serving sizes are checked with fixed, visible rules.' },
   { title: 'Understand it', text: 'A personal match score comes with a “Why” panel, and AI only explains the result.' },
 ];

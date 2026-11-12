@@ -79,6 +79,16 @@ function parseBoolean(raw, fallback, name, issues) {
   return undefined;
 }
 
+function parseIntegerInRange(raw, fallback, { name, min, max }, issues) {
+  if (raw === undefined || raw === '') return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < min || value > max) {
+    issues.push(`${name}: must be a whole number from ${min} to ${max}`);
+    return undefined;
+  }
+  return value;
+}
+
 /** Validates configuration. Pure: takes a plain object so it is easy to test. */
 export function parseEnv(source) {
   const issues = [];
@@ -102,6 +112,24 @@ export function parseEnv(source) {
     issues.push('COOKIE_SAME_SITE=none requires COOKIE_SECURE=true');
   }
 
+  const maxUploadMb = parseIntegerInRange(source.MAX_UPLOAD_MB, 5, { name: 'MAX_UPLOAD_MB', min: 1, max: 10 }, issues);
+  const geminiTimeoutMs = parseIntegerInRange(
+    source.GEMINI_TIMEOUT_MS,
+    45000,
+    { name: 'GEMINI_TIMEOUT_MS', min: 5000, max: 120000 },
+    issues,
+  );
+  const geminiDailyLimit = parseIntegerInRange(source.GEMINI_DAILY_LIMIT, 0, { name: 'GEMINI_DAILY_LIMIT', min: 0, max: 100000 }, issues);
+  const geminiApiKey = (source.GEMINI_API_KEY || '').trim() || undefined;
+  if (geminiApiKey && !/^[\x21-\x7e]{10,200}$/.test(geminiApiKey)) {
+    // The message never echoes the key.
+    issues.push('GEMINI_API_KEY: must be 10-200 visible characters with no spaces or line breaks');
+  }
+  const geminiModel = (source.GEMINI_MODEL || '').trim() || 'gemini-2.5-flash';
+  if (!/^[a-z0-9][a-z0-9.-]{2,60}$/.test(geminiModel)) {
+    issues.push('GEMINI_MODEL: must be a Gemini model id such as gemini-2.5-flash');
+  }
+
   if (issues.length > 0) throw new EnvValidationError(issues);
   return Object.freeze({
     nodeEnv,
@@ -112,5 +140,10 @@ export function parseEnv(source) {
     jwtExpiresInSeconds,
     cookieSecure,
     cookieSameSite,
+    maxUploadBytes: maxUploadMb * 1024 * 1024,
+    geminiApiKey,
+    geminiModel,
+    geminiTimeoutMs,
+    geminiDailyLimit,
   });
 }

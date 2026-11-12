@@ -1,0 +1,1 @@
+{"name":"nutrilens-ai","private":true,"type":"module","description":"Label analysis modules: Gemini Vision extraction, validation, deterministic scoring, allergen detection and explanations. Dependencies are declared in server/package.json."}

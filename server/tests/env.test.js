@@ -94,3 +94,36 @@ describe('parseEnv (authentication settings)', () => {
     assert.ok(catchError(() => parseEnv({ ...valid, COOKIE_SAME_SITE: 'sometimes' })) instanceof EnvValidationError);
   });
 });
+
+describe('parseEnv (upload and Gemini settings)', () => {
+  it('defaults to a 5 MB upload limit, a 45 second Gemini timeout and no API key', () => {
+    const env = parseEnv(valid);
+    assert.equal(env.maxUploadBytes, 5 * 1024 * 1024);
+    assert.equal(env.geminiTimeoutMs, 45000);
+    assert.equal(env.geminiModel, 'gemini-2.5-flash');
+    assert.equal(env.geminiApiKey, undefined);
+    assert.equal(env.geminiDailyLimit, 0);
+  });
+
+  it('accepts configured upload, Gemini model, key, timeout and daily limit', () => {
+    const env = parseEnv({ ...valid, MAX_UPLOAD_MB: '8', GEMINI_TIMEOUT_MS: '90000', GEMINI_MODEL: 'gemini-2.5-flash-lite', GEMINI_API_KEY: 'AIza-test-key-0123456789', GEMINI_DAILY_LIMIT: '50' });
+    assert.equal(env.maxUploadBytes, 8 * 1024 * 1024);
+    assert.equal(env.geminiTimeoutMs, 90000);
+    assert.equal(env.geminiModel, 'gemini-2.5-flash-lite');
+    assert.equal(env.geminiApiKey, 'AIza-test-key-0123456789');
+    assert.equal(env.geminiDailyLimit, 50);
+  });
+
+  it('rejects invalid values without echoing the API key', () => {
+    for (const MAX_UPLOAD_MB of ['0', '11', 'big']) {
+      assert.ok(catchError(() => parseEnv({ ...valid, MAX_UPLOAD_MB })) instanceof EnvValidationError, MAX_UPLOAD_MB);
+    }
+    for (const GEMINI_TIMEOUT_MS of ['100', '500000', 'soon']) {
+      assert.ok(catchError(() => parseEnv({ ...valid, GEMINI_TIMEOUT_MS })) instanceof EnvValidationError, GEMINI_TIMEOUT_MS);
+    }
+    assert.ok(catchError(() => parseEnv({ ...valid, GEMINI_MODEL: 'Bad Model!' })) instanceof EnvValidationError);
+    const bad = catchError(() => parseEnv({ ...valid, GEMINI_API_KEY: 'has spaces in it !!' }));
+    assert.ok(bad instanceof EnvValidationError);
+    assert.doesNotMatch(bad.message, /has spaces/);
+  });
+});

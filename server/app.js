@@ -1,20 +1,27 @@
 import cors from 'cors';
 import express from 'express';
-import { API_PREFIX, AUTH_PREFIX, PROFILE_PREFIX } from './config/constants.js';
+import { API_PREFIX, AUTH_PREFIX, PROFILE_PREFIX, SCANS_PREFIX } from './config/constants.js';
 import { createErrorHandler, notFound } from './middleware/errorHandler.js';
+import { createUploadMiddleware } from './middleware/upload.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { securityHeaders } from './middleware/securityHeaders.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHealthRouter } from './routes/health.js';
 import { createProfileRouter } from './routes/profile.js';
+import { createScansRouter } from './routes/scans.js';
 import { createAuthService } from './services/authService.js';
 import { createProfileService } from './services/profileService.js';
 
 const DEFAULT_RATE_LIMIT = { windowMs: 15 * 60 * 1000, max: 30 };
+// Each extraction uses one Gemini request (free-tier quota), so uploads are limited more tightly than logins.
+const DEFAULT_EXTRACT_RATE_LIMIT = { windowMs: 15 * 60 * 1000, max: 20 };
+const DEFAULT_ANALYSE_RATE_LIMIT = { windowMs: 15 * 60 * 1000, max: 60 };
+const DEFAULT_MAX_IN_FLIGHT_UPLOADS = 3;
 
 /**
  * `auth` = { jwtSecret, jwtExpiresInSeconds, bcryptRounds, cookie: { name, secure, sameSite, maxAgeMs } }
  * `userRepository` and `profileRepository` are injected so tests can use in-memory stores.
+ * `scanService` runs Gemini extraction, analysis and saved scans; `uploadLimits` = { maxBytes }.
  */
 export function createApp({
   clientOrigin,
@@ -24,8 +31,13 @@ export function createApp({
   getDatabaseState,
   userRepository,
   profileRepository,
+  scanService,
+  uploadLimits,
   auth,
   authRateLimit = DEFAULT_RATE_LIMIT,
+  extractRateLimit = DEFAULT_EXTRACT_RATE_LIMIT,
+  analyseRateLimit = DEFAULT_ANALYSE_RATE_LIMIT,
+  maxInFlightUploads = DEFAULT_MAX_IN_FLIGHT_UPLOADS,
 }) {
   const app = express();
   app.disable('x-powered-by');
@@ -62,6 +74,21 @@ export function createApp({
   app.use(
     PROFILE_PREFIX,
     createProfileRouter({ profileService, authService, cookieName: auth.cookie.name, clientOrigin }),
+  );
+
+  app.use(
+    SCANS_PREFIX,
+    createScansRouter({
+      scanService,
+      authService,
+      cookieName: auth.cookie.name,
+      clientOrigin,
+      uploadMiddleware: createUploadMiddleware({ maxBytes: uploadLimits.maxBytes }),
+      maxUploadBytes: uploadLimits.maxBytes,
+      extractRateLimit,
+      analyseRateLimit,
+      maxInFlight: maxInFlightUploads,
+    }),
   );
 
   app.use(notFound);
