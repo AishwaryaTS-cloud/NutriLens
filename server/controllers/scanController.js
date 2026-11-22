@@ -65,6 +65,26 @@ export function createScanController({ scanService, maxUploadBytes }) {
       res.json({ comparison: await scanService.compare(req.user.id, idParam(req.query.a), idParam(req.query.b)) });
     },
 
+    /** Compare any two products: each side is { scanId } (saved) or { label } (newly analysed, unsaved). */
+    async compareProducts(req, res) {
+      const side = (value, field) => {
+        if (!isObject(value)) throw badBody(field, 'Choose a product for this side.');
+        const hasId = value.scanId !== undefined;
+        const hasLabel = value.label !== undefined;
+        if (hasId === hasLabel) throw badBody(field, 'Send either a saved scan id or a label, not both.');
+        if (hasId) {
+          if (!idParam(value.scanId)) throw badBody(field, 'That saved scan id is not valid.');
+          return { scanId: value.scanId };
+        }
+        if (!isObject(value.label)) throw badBody(field, 'Send the label as an object.');
+        return { label: value.label };
+      };
+      if (!isObject(req.body)) throw badBody('body', 'Send the two products to compare.');
+      const a = side(req.body.a, 'a');
+      const b = side(req.body.b, 'b');
+      res.json({ comparison: await scanService.compareProducts(req.user.id, a, b) });
+    },
+
     async summary(req, res) {
       res.json({ summary: await scanService.summary(req.user.id) });
     },

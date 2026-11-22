@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AnalysisView from '../components/AnalysisView.jsx';
 import Icon from '../components/Icon.jsx';
 import ImageDropzone from '../components/ImageDropzone.jsx';
@@ -32,6 +32,7 @@ export default function Scan() {
   const abortRef = useRef(null);
   const headingRef = useRef(null);
   const replaceRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -166,6 +167,15 @@ export default function Scan() {
             ) : (
               <button type="button" className="nl-btn nl-btn--primary" onClick={save} disabled={state.saving}>{state.saving ? 'Saving…' : 'Save this scan'}</button>
             )}
+            <button
+              type="button"
+              className="nl-btn nl-btn--outline"
+              onClick={() => (state.savedId
+                ? navigate(`/compare?a=${state.savedId}`)
+                : navigate('/compare', { state: { draft: { label: state.analysis.label, name: state.analysis.label.productName } } }))}
+            >
+              <Icon name="compare" size={18} /> Compare with a saved product
+            </button>
             <button type="button" className="nl-btn nl-btn--outline" onClick={() => dispatch({ type: 'BACK_TO_EDIT' })}>Correct the values</button>
             <button type="button" className="nl-btn nl-btn--ghost" onClick={startOver}>Scan another label</button>
           </div>

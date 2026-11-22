@@ -25,6 +25,7 @@ export function createScansRouter({ scanService, authService, cookieName, client
   router.get('/options', controller.options);
   router.get('/summary', asyncHandler(controller.summary));
   router.get('/compare', asyncHandler(controller.compare));
+  router.post('/compare', asyncHandler(controller.compareProducts));
   router.post('/extract', createRateLimiter(extractRateLimit), createInFlightLimiter({ max: maxInFlight }), ...uploadMiddleware, asyncHandler(controller.extract));
   router.post('/analyse', createRateLimiter(analyseRateLimit), asyncHandler(controller.analyse));
 

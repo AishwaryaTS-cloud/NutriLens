@@ -40,6 +40,7 @@ export default function ScanDetail() {
         <AnalysisView analysis={state.scan.analysis} explanation={state.scan.explanation}>
           <div className="result-actions">
             <Link className="nl-btn nl-btn--primary" to="/scan">Scan another label</Link>
+            <Link className="nl-btn nl-btn--outline" to={`/compare?a=${id}`}><Icon name="compare" size={18} /> Compare with another product</Link>
             {confirming ? (
               <>
                 <span className="result-actions__saved">Delete this scan?</span>
