@@ -5,12 +5,12 @@ import Icon from './Icon.jsx';
 
 function Rows({ summary }) {
   return (
-    <dl className="nl-label__rows">
-      <div className="nl-label__row">
+    <dl className="pref-rows">
+      <div className="pref-row">
         <dt>Dietary preference</dt>
         <dd>{summary.dietary}</dd>
       </div>
-      <div className="nl-label__row summary__block">
+      <div className="pref-row">
         <dt>Nutrient priorities</dt>
         <dd>
           {summary.nutrients.length === 0 ? (
@@ -26,7 +26,7 @@ function Rows({ summary }) {
           )}
         </dd>
       </div>
-      <div className="nl-label__row summary__block">
+      <div className="pref-row">
         <dt>Allergens to avoid</dt>
         <dd>
           {summary.allergens.length === 0 ? (
@@ -74,10 +74,6 @@ export default function PreferencesSummary() {
     body = summary.isConfigured ? (
       <>
         <Rows summary={summary} />
-        <div className="nl-rule nl-rule--medium" aria-hidden="true" />
-        <Link to="/preferences" className="nl-btn nl-btn--outline nl-btn--sm summary__edit">
-          Edit preferences
-        </Link>
       </>
     ) : (
       <>
@@ -93,11 +89,11 @@ export default function PreferencesSummary() {
   }
 
   return (
-    <section className="nl-label" aria-labelledby="prefs-title">
-      <h2 id="prefs-title" className="nl-label__title">
-        Your preferences
-      </h2>
-      <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
+    <section className="card" aria-labelledby="prefs-title">
+      <div className="card__head">
+        <h2 id="prefs-title" className="card__title">Your preferences</h2>
+        {profile && options && summarizeProfile(profile, options).isConfigured && <Link to="/preferences" className="card__link">Edit</Link>}
+      </div>
       {body}
     </section>
   );

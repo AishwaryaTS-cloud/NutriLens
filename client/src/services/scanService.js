@@ -49,6 +49,12 @@ export async function deleteScan(id) {
   await api.delete(`/scans/${encodeURIComponent(id)}`);
 }
 
+/** Compares any two products: each side is { scanId } (saved) or { label } (newly analysed, not saved). */
+export async function compareProducts(a, b) {
+  const { data } = await api.post('/scans/compare', { a, b });
+  return data.comparison;
+}
+
 export async function compareScans(a, b) {
   const { data } = await api.get('/scans/compare', { params: { a, b } });
   return data.comparison;

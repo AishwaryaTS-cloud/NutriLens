@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
-import { GuestRoute, ProtectedRoute } from './components/RouteGuards.jsx';
+import { GuestRoute, HomeRoute, ProtectedRoute } from './components/RouteGuards.jsx';
 import Compare from './pages/Compare.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import DesignSystem from './pages/DesignSystem.jsx';
@@ -17,7 +17,7 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Landing />} />
+        <Route index element={<HomeRoute><Landing /></HomeRoute>} />
         <Route element={<GuestRoute />}>
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />

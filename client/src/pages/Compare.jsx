@@ -1,107 +1,97 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { AllergenPanel } from '../components/AnalysisView.jsx';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import ComparisonView from '../components/ComparisonView.jsx';
 import Icon from '../components/Icon.jsx';
-import { LEVEL_TEXT } from '../hooks/labelForm.js';
+import ProductPicker from '../components/ProductPicker.jsx';
 import { toApiError } from '../services/apiError.js';
-import { compareScans } from '../services/scanService.js';
-import { ScoreBadge } from './History.jsx';
+import { compareProducts, compareScans, listScans } from '../services/scanService.js';
 
-const NUTRIENTS = ['sugar', 'addedSugar', 'protein', 'fibre', 'sodium', 'fat', 'saturatedFat', 'carbohydrates'];
-const fmt = (n) => (n === null || n === undefined ? '—' : Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100));
-
-/** Two saved products scored with the same functions and your current preferences. */
+/**
+ * Food Product Comparison.
+ *  /compare            choose two saved products (or one saved product + a product you just analysed)
+ *  /compare?a=ID&b=ID  two saved scans (shareable link)
+ *  /compare?a=ID       product A preselected
+ * A newly analysed, unsaved product arrives through router state ({ draft: { label, name } }).
+ */
 export default function Compare() {
   const [params] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const a = params.get('a');
   const b = params.get('b');
-  const [state, setState] = useState({ status: 'loading', data: null, error: null });
+  const draftState = location.state?.draft ?? null;
+  const draft = draftState ? { label: draftState.label, summary: { productName: draftState.name ?? draftState.label.productName ?? 'New product', finalScore: null, allergenConflict: false } } : null;
+
+  const [local, setLocal] = useState(null); // a request started from the picker (needed when one product is unsaved)
+  const request = local ?? (a && b ? { a: { scanId: a }, b: { scanId: b } } : null);
+  const requestKey = request ? JSON.stringify(request) : '';
+
+  const [scans, setScans] = useState({ status: 'loading', list: [], error: null });
+  const [result, setResult] = useState({ status: 'idle', data: null, error: null });
 
   useEffect(() => {
+    if (request) return undefined;
     let cancelled = false;
-    if (!a || !b) {
-      setState({ status: 'error', data: null, error: { message: 'Choose two saved scans from your history to compare.' } });
-      return undefined;
-    }
-    setState({ status: 'loading', data: null, error: null });
-    compareScans(a, b)
-      .then((data) => !cancelled && setState({ status: 'ready', data, error: null }))
-      .catch((err) => !cancelled && setState({ status: 'error', data: null, error: toApiError(err) }));
+    setScans((s) => ({ ...s, status: 'loading' }));
+    listScans()
+      .then((list) => !cancelled && setScans({ status: 'ready', list, error: null }))
+      .catch((err) => !cancelled && setScans({ status: 'error', list: [], error: toApiError(err) }));
     return () => { cancelled = true; };
-  }, [a, b]);
+  }, [requestKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const data = state.data;
-  const columns = data ? [['a', data.a], ['b', data.b]] : [];
+  useEffect(() => {
+    if (!request) { setResult({ status: 'idle', data: null, error: null }); return undefined; }
+    let cancelled = false;
+    setResult({ status: 'loading', data: null, error: null });
+    const run = request.a.scanId && request.b.scanId ? compareScans(request.a.scanId, request.b.scanId) : compareProducts(request.a, request.b);
+    run
+      .then((data) => !cancelled && setResult({ status: 'ready', data, error: null }))
+      .catch((err) => !cancelled && setResult({ status: 'error', data: null, error: toApiError(err) }));
+    return () => { cancelled = true; };
+  }, [requestKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function start(next) {
+    if (next.a.scanId && next.b.scanId) navigate(`/compare?a=${next.a.scanId}&b=${next.b.scanId}`);
+    else setLocal(next);
+  }
+
+  function reset() {
+    setLocal(null);
+    navigate('/compare', { state: location.state });
+  }
 
   return (
-    <section className="nl-container compare">
-      <header className="scan__header">
-        <p className="nl-eyebrow">Compare</p>
-        <h1 className="scan__title">Product comparison</h1>
-        <p className="scan__lead">Both products are scored with the same calculation and your current preferences. Allergen warnings are shown separately: a higher score does not make a product safe.</p>
-      </header>
-      <p><Link to="/history">← Back to history</Link></p>
-      {state.status === 'loading' && <p role="status"><Icon name="loader" size={20} className="nl-spin" /> Comparing…</p>}
-      {state.status === 'error' && <p className="nl-alert" role="alert"><Icon name="alert" size={20} /><span>{state.error.message}</span></p>}
-
-      {data && (
-        <>
-          <p className="compare__winner" role="status">
-            {data.winner === 'tie' && 'Both products have the same Personal Match Score.'}
-            {data.winner === 'a' && <>Better match for you: <strong>{data.a.productName ?? 'First product'}</strong></>}
-            {data.winner === 'b' && <>Better match for you: <strong>{data.b.productName ?? 'Second product'}</strong></>}
-            {data.winner === null && 'No winner can be named.'}
+    <section className="nl-container page">
+      <header className="page__head">
+        <div>
+          <p className="nl-eyebrow">Compare products</p>
+          <h1 className="page__title">{request ? 'Side by side' : 'Compare two products'}</h1>
+          <p className="page__lead">
+            {request
+              ? 'Nutrition, ingredients, allergens and scores, calculated with your current preferences.'
+              : 'Pick two products to see how their nutrition, ingredients, allergens and Personal Match Scores differ.'}
           </p>
-          {data.notes.length > 0 && <ul className="compare__notes">{data.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
+        </div>
+        {request && <button type="button" className="nl-btn nl-btn--outline nl-btn--sm" onClick={reset}><Icon name="refresh" size={18} /> Choose different products</button>}
+      </header>
 
-          <div className="compare__heads">
-            {columns.map(([key, item]) => (
-              <div key={key} className="result-card compare__head">
-                <h2 className="result-card__title">{item.productName ?? 'Unnamed product'}</h2>
-                {item.brand && <p className="result-head__brand">{item.brand}</p>}
-                <ScoreBadge score={item.analysis.match.finalScore} />
-                <p className="nl-field__hint">Base {fmt(item.analysis.match.baseScore)}, allergen penalty {item.analysis.match.allergenPenalty.total}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="compare__allergens">
-            {columns.map(([key, item]) => <AllergenPanel key={key} match={item.analysis.match} />)}
-          </div>
-
-          <div className="result-card">
-            <h2 className="result-card__title">Score parts</h2>
-            <div className="table-wrap">
-              <table className="result-table">
-                <thead><tr><th scope="col">Part</th><th scope="col">{data.a.productName ?? 'First'}</th><th scope="col">{data.b.productName ?? 'Second'}</th></tr></thead>
-                <tbody>
-                  {[['preference', 'Personal Preference'], ['quality', 'Nutrition Quality'], ['ingredient', 'Ingredients']].map(([k, name]) => (
-                    <tr key={k}><th scope="row">{name}</th><td>{fmt(data.a.analysis.match.components[k].score)}</td><td>{fmt(data.b.analysis.match.components[k].score)}</td></tr>
-                  ))}
-                  <tr className="result-table__sum"><th scope="row">Final score</th><td>{fmt(data.a.analysis.match.finalScore)}</td><td>{fmt(data.b.analysis.match.finalScore)}</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="result-card">
-            <h2 className="result-card__title">Nutrients per 100 g</h2>
-            <div className="table-wrap">
-              <table className="result-table">
-                <thead><tr><th scope="col">Nutrient</th><th scope="col">{data.a.productName ?? 'First'}</th><th scope="col">{data.b.productName ?? 'Second'}</th></tr></thead>
-                <tbody>
-                  {NUTRIENTS.map((k) => {
-                    const x = data.a.analysis.nutrients[k];
-                    const y = data.b.analysis.nutrients[k];
-                    const cell = (n) => (n.value === null ? <em>not available</em> : <>{fmt(n.value)} {n.unit} <span className={`level level--${n.level.toLowerCase()}`}>{LEVEL_TEXT[n.level]}</span></>);
-                    return <tr key={k}><th scope="row">{x.label}</th><td>{cell(x)}</td><td>{cell(y)}</td></tr>;
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      {!request && scans.status === 'loading' && <p className="page-loading" role="status"><Icon name="loader" size={20} className="nl-spin" /> Loading your scans…</p>}
+      {!request && scans.status === 'error' && <p className="nl-alert" role="alert"><Icon name="alert" size={20} /><span>{scans.error.message}</span></p>}
+      {!request && scans.status === 'ready' && (
+        <>
+          <ProductPicker scans={scans.list} draft={draft} initialIds={a ? [a] : []} onCompare={start} />
+          {!draft && <p className="muted-note picker__tip">To compare a product you haven’t saved, <Link to="/scan">scan it</Link> and choose “Compare with a saved product” on its results.</p>}
         </>
       )}
+
+      {request && result.status === 'loading' && <p className="page-loading" role="status"><Icon name="loader" size={20} className="nl-spin" /> Comparing…</p>}
+      {request && result.status === 'error' && (
+        <div className="stack">
+          <p className="nl-alert" role="alert"><Icon name="alert" size={20} /><span>{result.error.message}</span></p>
+          <button type="button" className="nl-btn nl-btn--outline" onClick={reset}>Choose products again</button>
+        </div>
+      )}
+      {request && result.status === 'ready' && <ComparisonView comparison={result.data} />}
     </section>
   );
 }

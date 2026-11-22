@@ -1,7 +1,13 @@
-/* Order matters: tokens first, then base, layout, components, pages. */
+/* Order matters: tokens first, then base, components, then layout, landing, app, pages. */
 @import './tokens.css';
 @import './base.css';
-@import './layout.css';
 @import './components.css';
+@import './layout.css';
+@import './landing.css';
+@import './app.css';
 @import './pages.css';
-@import './analysis.css';
+@import './scan.css';
+@import './prefs.css';
+@import './auth.css';
+@import './results.css';
+@import './compare.css';

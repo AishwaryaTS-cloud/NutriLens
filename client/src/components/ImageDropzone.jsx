@@ -28,7 +28,7 @@ export default function ImageDropzone({ onFile, maxUploadMb, allowedTypes, disab
         pick(event.dataTransfer.files);
       }}
     >
-      <Icon name="arrow" size={28} className="dropzone__icon" />
+      <span className="dropzone__icon"><Icon name="upload" size={28} /></span>
       <p className="dropzone__title">Drop a photo of the label here</p>
       <p className="dropzone__hint">or choose one from your device. JPG, PNG or WebP, up to {maxUploadMb} MB.</p>
 

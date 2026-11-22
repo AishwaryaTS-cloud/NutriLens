@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AnalysisView from '../components/AnalysisView.jsx';
 import Icon from '../components/Icon.jsx';
 import ImageDropzone from '../components/ImageDropzone.jsx';
@@ -9,7 +9,7 @@ import { FALLBACK_OPTIONS, initialScanState, scanReducer, validateImageFile } fr
 import { toApiError } from '../services/apiError.js';
 import { analyseLabel, extractLabel, fetchScanOptions, saveScan } from '../services/scanService.js';
 
-const STEPS = ['Choose image', 'Gemini reads it', 'Check and correct', 'Analysis'];
+const STEPS = ['Upload', 'Reading', 'Review', 'Analysis'];
 const stepIndex = { idle: 0, selected: 0, extracting: 1, failed: 1, review: 2, analysing: 3, results: 3 };
 
 function Progress({ state }) {
@@ -31,6 +31,8 @@ export default function Scan() {
   const [options, setOptions] = useState(FALLBACK_OPTIONS);
   const abortRef = useRef(null);
   const headingRef = useRef(null);
+  const replaceRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -100,15 +102,20 @@ export default function Scan() {
   const current = stepIndex[phase];
 
   return (
-    <section className="nl-container scan">
+    <section className="nl-container page scan">
       <header className="scan__header">
-        <p className="nl-eyebrow">Scan a label</p>
-        <h1 className="scan__title" tabIndex={-1} ref={headingRef}>{phase === 'results' ? 'Your analysis' : phase === 'review' || phase === 'analysing' ? 'Check the label values' : 'Analyse a food label'}</h1>
+        <p className="nl-eyebrow">Scan a product</p>
+        <h1 className="page__title" tabIndex={-1} ref={headingRef}>{phase === 'results' ? 'Your analysis' : phase === 'review' || phase === 'analysing' ? 'Check the label values' : 'Scan a food label'}</h1>
         {(phase === 'idle' || phase === 'selected') && (
-          <p className="scan__lead">Add a photo of a packaged food label. Gemini reads the picture directly, then you check and correct what it found before anything is calculated. Your image is not saved.</p>
+          <p className="page__lead">Add a photo of a packaged food label. Gemini reads it, then you check and correct what it found before anything is calculated. Your image is not saved.</p>
         )}
-        <ol className="scan__steps" aria-label="Steps">
-          {STEPS.map((name, i) => <li key={name} className={i === current ? 'is-current' : i < current ? 'is-done' : ''}>{i + 1}. {name}</li>)}
+        <ol className="stepper" aria-label="Progress">
+          {STEPS.map((name, i) => (
+            <li key={name} className={i === current ? 'is-current' : i < current ? 'is-done' : ''} aria-current={i === current ? 'step' : undefined}>
+              <span className="stepper__dot">{i < current ? <Icon name="check" size={16} /> : i + 1}</span>
+              <span className="stepper__name">{name}</span>
+            </li>
+          ))}
         </ol>
       </header>
 
@@ -118,7 +125,7 @@ export default function Scan() {
 
       {phase === 'idle' && (
         <>
-          <p className="privacy-note">The image you choose is sent to Google’s Gemini API through this server so it can read the label. Do not upload photos of people or personal documents.</p>
+          <p className="privacy-note"><Icon name="shield" size={18} /> The image you choose is sent to Google’s Gemini API through this server so it can read the label. Do not upload photos of people or personal documents.</p>
           <ImageDropzone onFile={handleFile} maxUploadMb={options.maxUploadMb ?? FALLBACK_OPTIONS.maxUploadMb} allowedTypes={options.allowedTypes} />
           <p className="scan__manual">No photo? <button type="button" className="link-button" onClick={() => dispatch({ type: 'MANUAL' })}>Enter the label values by hand</button></p>
         </>
@@ -126,14 +133,21 @@ export default function Scan() {
 
       {(phase === 'selected' || phase === 'failed') && (
         <div className="scan-selected">
-          <figure className="scan-selected__figure"><img src={state.previewUrl} alt="The label image you chose" /></figure>
+          <figure className="scan-selected__figure">
+            <img src={state.previewUrl} alt="The label image you chose" />
+            <figcaption>{state.file?.name}</figcaption>
+          </figure>
           <div className="scan-selected__panel">
             <p className="scan-selected__name">{phase === 'failed' ? 'The label could not be read' : 'Image ready'}</p>
-            <p className="nl-field__hint">{phase === 'failed' ? 'You can try again, choose a different photo, or type the values in yourself.' : 'Check that the label is sharp and fully in view. The image is sent only when you press the button.'}</p>
+            <p className="nl-field__hint">{phase === 'failed' ? 'You can try again, replace the photo, or type the values in yourself.' : 'Check that the label is sharp and fully in view. The image is sent only when you press the button.'}</p>
             <div className="review__actions">
-              <button type="button" className="nl-btn nl-btn--primary" onClick={read}>{phase === 'failed' ? 'Try again' : 'Read with Gemini'}</button>
+              <button type="button" className="nl-btn nl-btn--primary" onClick={read}>{phase === 'failed' ? 'Try again' : 'Read label with Gemini'}</button>
               {phase === 'failed' && <button type="button" className="nl-btn nl-btn--outline" onClick={() => dispatch({ type: 'MANUAL' })}>Enter values by hand</button>}
-              <button type="button" className="nl-btn nl-btn--ghost" onClick={startOver}>Choose a different image</button>
+            </div>
+            <div className="scan-selected__tools">
+              <button type="button" className="link-button" onClick={() => replaceRef.current?.click()}><Icon name="refresh" size={16} /> Replace image</button>
+              <button type="button" className="link-button link-button--danger" onClick={startOver}><Icon name="trash" size={16} /> Remove</button>
+              <input ref={replaceRef} className="sr-only" type="file" tabIndex={-1} aria-label="Choose a replacement image" accept={(options.allowedTypes ?? FALLBACK_OPTIONS.allowedTypes).join(',')} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
             </div>
           </div>
         </div>
@@ -153,6 +167,15 @@ export default function Scan() {
             ) : (
               <button type="button" className="nl-btn nl-btn--primary" onClick={save} disabled={state.saving}>{state.saving ? 'Saving…' : 'Save this scan'}</button>
             )}
+            <button
+              type="button"
+              className="nl-btn nl-btn--outline"
+              onClick={() => (state.savedId
+                ? navigate(`/compare?a=${state.savedId}`)
+                : navigate('/compare', { state: { draft: { label: state.analysis.label, name: state.analysis.label.productName } } }))}
+            >
+              <Icon name="compare" size={18} /> Compare with a saved product
+            </button>
             <button type="button" className="nl-btn nl-btn--outline" onClick={() => dispatch({ type: 'BACK_TO_EDIT' })}>Correct the values</button>
             <button type="button" className="nl-btn nl-btn--ghost" onClick={startOver}>Scan another label</button>
           </div>

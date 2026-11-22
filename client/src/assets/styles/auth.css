@@ -1,0 +1,15 @@
+/* Login and register. Tokens only. */
+.auth { display: grid; gap: var(--space-7); align-items: center; padding-block: var(--space-8) 0; }
+.auth__title { max-width: 14ch; font-size: var(--text-3xl); line-height: 1.05; letter-spacing: -0.035em; }
+.auth__lead { max-width: 40ch; margin-top: var(--space-4); color: var(--ink-soft); font-size: var(--text-lg); }
+.auth__card { width: 100%; max-width: 28rem; padding: var(--space-6); box-shadow: var(--shadow-1); }
+.auth__card-title { margin-bottom: var(--space-5); font-size: var(--text-xl); }
+.auth__form { display: grid; gap: var(--space-4); }
+.auth__switch { margin-top: var(--space-5); padding-top: var(--space-4); border-top: var(--rule-thin) solid var(--line); color: var(--ink-soft); font-size: var(--text-sm); }
+.auth__switch a { font-weight: 700; }
+@media (min-width: 56rem) { .auth { grid-template-columns: 1fr minmax(24rem, 28rem); justify-content: space-between; } }
+
+.not-found { display: grid; justify-items: start; gap: var(--space-3); padding-block: var(--space-9); }
+.not-found__title { font-size: var(--text-3xl); }
+.not-found__text { color: var(--ink-soft); }
+.flip { transform: rotate(180deg); }

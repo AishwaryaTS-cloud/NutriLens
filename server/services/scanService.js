@@ -1,3 +1,4 @@
+import { compareProducts } from '../../ai/comparison/compareProducts.js';
 import { analyseLabel } from '../../ai/analysis/analyseLabel.js';
 import { buildExplanationFacts } from '../../ai/explanations/facts.js';
 import { buildRuleBasedExplanation } from '../../ai/explanations/ruleBased.js';
@@ -49,6 +50,41 @@ export function createScanService({ extractor, explainer, scanRepository, profil
       throw new HttpError(422, 'LABEL_INVALID', 'Some label values need fixing before the analysis can run.', { issues: analysis.issues });
     }
     return { profile, analysis };
+  }
+
+  /** Loads or analyses both products with the CURRENT profile, then builds the comparison. */
+  async function compareInputs(userId, inputs) {
+    const profile = await profileService.get(userId);
+    const build = async (input, position) => {
+      if (input.scanId) {
+        const doc = await scanRepository.findById(userId, input.scanId);
+        if (!doc) throw new HttpError(404, 'SCAN_NOT_FOUND', 'One of those scans was not found.');
+        const analysis = analyseLabel({ label: doc.label, profile });
+        if (!analysis.ok) throw new HttpError(422, 'LABEL_INVALID', 'A saved scan could not be re-analysed.');
+        return { id: idOf(doc), saved: true, productName: doc.productName ?? null, brand: doc.brand ?? null, analysis };
+      }
+      const analysis = analyseLabel({ label: input.label, profile });
+      if (!analysis.ok) throw new HttpError(422, 'LABEL_INVALID', `The ${position} product has label values that need fixing before it can be compared.`, { issues: analysis.issues });
+      return { id: null, saved: false, productName: analysis.label.productName ?? null, brand: analysis.label.brand ?? null, analysis };
+    };
+    const first = await build(inputs[0], 'first');
+    const second = await build(inputs[1], 'second');
+    const sa = first.analysis.match.finalScore;
+    const sb = second.analysis.match.finalScore;
+    const notes = [];
+    let winner = null;
+    if (sa !== null && sb !== null) winner = sa === sb ? 'tie' : sa > sb ? 'a' : 'b';
+    else notes.push('At least one product has too little nutrition data for a score, so no winner is named.');
+    for (const [name, item] of [['First', first], ['Second', second]]) {
+      if (item.analysis.match.allergenPenalty.hasConfirmedConflict) notes.push(`${name} product has a confirmed allergen conflict with your saved allergens. Its score is capped at 49.`);
+      else if (item.analysis.match.allergens.status !== 'complete') notes.push(`${name} product: allergen safety could not be established.`);
+    }
+    const details = compareProducts({
+      a: { name: first.productName, analysis: first.analysis },
+      b: { name: second.productName, analysis: second.analysis },
+      profile,
+    });
+    return { a: first, b: second, winner, notes, details, scoringVersion: first.analysis.match.version };
   }
 
   return {
@@ -125,27 +161,16 @@ export function createScanService({ extractor, explainer, scanRepository, profil
     /** Re-scores two saved scans with the CURRENT profile using the same calculation functions. */
     async compare(userId, a, b) {
       if (!a || !b || a === b) throw new HttpError(400, 'COMPARE_INVALID', 'Choose two different saved scans to compare.');
-      const [docA, docB] = await Promise.all([scanRepository.findById(userId, a), scanRepository.findById(userId, b)]);
-      if (!docA || !docB) throw new HttpError(404, 'SCAN_NOT_FOUND', 'One of those scans was not found.');
-      const profile = await profileService.get(userId);
-      const build = (doc) => {
-        const analysis = analyseLabel({ label: doc.label, profile });
-        if (!analysis.ok) throw new HttpError(422, 'LABEL_INVALID', 'A saved scan could not be re-analysed.');
-        return { id: idOf(doc), productName: doc.productName ?? null, brand: doc.brand ?? null, analysis };
-      };
-      const first = build(docA);
-      const second = build(docB);
-      const sa = first.analysis.match.finalScore;
-      const sb = second.analysis.match.finalScore;
-      const notes = [];
-      let winner = null;
-      if (sa !== null && sb !== null) winner = sa === sb ? 'tie' : sa > sb ? 'a' : 'b';
-      else notes.push('At least one product has too little nutrition data for a score, so no winner is named.');
-      for (const [name, item] of [['First', first], ['Second', second]]) {
-        if (item.analysis.match.allergenPenalty.hasConfirmedConflict) notes.push(`${name} product has a confirmed allergen conflict with your saved allergens. Its score is capped at 49.`);
-        else if (item.analysis.match.allergens.status !== 'complete') notes.push(`${name} product: allergen safety could not be established.`);
-      }
-      return { a: first, b: second, winner, notes, scoringVersion: first.analysis.match.version };
+      return compareInputs(userId, [{ scanId: a }, { scanId: b }]);
+    },
+
+    /**
+     * Compares any two products, each either a saved scan ({ scanId }) or a freshly analysed,
+     * not-yet-saved label ({ label }). Same analysis and scoring functions as everywhere else.
+     */
+    async compareProducts(userId, a, b) {
+      if (a.scanId && b.scanId && a.scanId === b.scanId) throw new HttpError(400, 'COMPARE_INVALID', 'Choose two different products to compare.');
+      return compareInputs(userId, [a, b]);
     },
 
     async summary(userId) {

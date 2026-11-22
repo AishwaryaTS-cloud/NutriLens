@@ -27,9 +27,9 @@ h3,
 h4 {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 700;
   line-height: var(--leading-tight);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 p {
@@ -107,3 +107,6 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Headings that receive focus after a step change must not hide under the sticky header. */
+[tabindex='-1'] { scroll-margin-top: calc(var(--header-h) + var(--space-4)); outline: none; }

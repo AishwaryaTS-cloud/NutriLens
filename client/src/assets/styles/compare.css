@@ -1,0 +1,138 @@
+/* Food Product Comparison. Tokens only: same palette, same font, same cards as the rest of the app. */
+.stack { display: grid; gap: var(--space-4); justify-items: start; }
+.picker { display: grid; gap: var(--space-5); }
+.picker__tip { margin-top: var(--space-5); }
+
+/* Picker slots */
+.picker__slots { display: grid; gap: var(--space-3); grid-template-columns: 1fr auto 1fr; align-items: stretch; }
+.slot { position: relative; display: flex; align-items: center; gap: var(--space-4); min-height: 6rem; padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); border: var(--rule-thin) solid var(--line); background: var(--surface); }
+.slot--empty { border-style: dashed; color: var(--ink-soft); }
+.slot--filled { border-color: var(--leaf); box-shadow: 0 0 0 1px var(--leaf); }
+.slot__letter { display: inline-grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--leaf); color: var(--on-leaf); font-weight: 800; }
+.slot--empty .slot__letter { background: var(--surface-muted); color: var(--ink-soft); }
+.slot__body { flex: 1; min-width: 0; }
+.slot__name { font-weight: 700; font-size: var(--text-lg); overflow-wrap: anywhere; }
+.slot__meta, .slot__hint { font-size: var(--text-sm); color: var(--ink-soft); }
+.picker__swap { align-self: center; display: inline-grid; place-items: center; width: 44px; height: 44px; border: var(--rule-thin) solid var(--line); border-radius: 50%; background: var(--surface); color: var(--leaf); cursor: pointer; }
+.picker__swap:disabled { opacity: 0.4; cursor: not-allowed; }
+.picker__cta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.picker__hint { color: var(--ink-soft); font-size: var(--text-sm); }
+.search--sm { max-width: 18rem; min-width: 12rem; }
+.card__head .search { flex: 0 1 18rem; }
+
+/* Result */
+.cmp { display: grid; gap: var(--space-6); }
+.cmp-section { display: grid; gap: var(--space-4); }
+.cmp-title { font-size: var(--text-xl); }
+.cmp-sub { margin: var(--space-5) 0 var(--space-3); font-size: var(--text-base); }
+.cmp-minor { margin-bottom: var(--space-2); font-size: var(--text-sm); color: var(--ink-soft); }
+.cmp-verdict { font-size: var(--text-lg); font-weight: 700; }
+.cmp-heads { display: grid; gap: var(--space-4); grid-template-columns: 1fr 1fr; align-items: stretch; }
+.cmp-pair { display: grid; gap: var(--space-5); grid-template-columns: 1fr 1fr; align-items: start; }
+.cmp-head { position: relative; display: grid; justify-items: center; align-content: start; gap: var(--space-2); text-align: center; }
+.cmp-head.is-winner { border-color: var(--leaf); box-shadow: 0 0 0 1px var(--leaf); }
+.cmp-head__flag { white-space: nowrap; display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-3); border-radius: 999px; background: var(--leaf); color: var(--on-leaf); font-size: 0.75rem; font-weight: 700; }
+.cmp-head__flag.is-hidden { visibility: hidden; }
+.cmp-head__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); width: 100%; }
+.cmp-head__letter { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-muted); color: var(--ink-soft); font-size: 0.8rem; font-weight: 800; }
+.cmp-head__name { font-size: var(--text-lg); overflow-wrap: anywhere; }
+.cmp-head__brand { color: var(--ink-soft); margin-top: -4px; }
+.cmp-head__tags { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-1); }
+.cmp-head__tags .badge { margin: 0; }
+
+/* Summary points and alerts */
+.cmp-summary__list { display: grid; gap: var(--space-3); margin: var(--space-3) 0; }
+.cmp-point { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--bg); border-left: 4px solid var(--line); }
+.cmp-point .nl-icon { flex-shrink: 0; margin-top: 2px; }
+.cmp-point--danger { border-left-color: var(--chilli); background: color-mix(in srgb, var(--chilli) 9%, var(--surface)); font-weight: 600; }
+.cmp-point--danger .nl-icon { color: var(--chilli-strong); }
+.cmp-point--warn { border-left-color: var(--turmeric); }
+.cmp-point--warn .nl-icon { color: var(--score-caution); }
+.cmp-point--good { border-left-color: var(--leaf); }
+.cmp-point--good .nl-icon { color: var(--leaf); }
+.cmp-point--info .nl-icon { color: var(--leaf); }
+.cmp-alerts { display: grid; gap: var(--space-3); }
+.cmp-alert { display: flex; gap: var(--space-3); align-items: flex-start; margin: 0; padding: var(--space-4) var(--space-5); border: 1px solid var(--line); border-left-width: 6px; border-radius: var(--radius-lg); background: var(--surface); font-weight: 600; }
+.cmp-alert .nl-icon { flex-shrink: 0; margin-top: 1px; }
+.cmp-alert--danger { border-color: var(--chilli); background: color-mix(in srgb, var(--chilli) 10%, var(--surface)); color: var(--ink); }
+.cmp-alert--danger .nl-icon { color: var(--chilli-strong); }
+.cmp-alert--warn { border-color: var(--turmeric); background: color-mix(in srgb, var(--turmeric) 14%, var(--surface)); }
+.cmp-alert--info .nl-icon { color: var(--leaf); }
+
+/* Allergen groups */
+.allergen-groups { display: grid; gap: var(--space-5); grid-template-columns: repeat(3, 1fr); margin-bottom: var(--space-4); }
+.allergen-group h3 { margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+.allergen-chips { display: grid; gap: var(--space-2); }
+.allergen-chip { display: grid; gap: 2px; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-size: var(--text-sm); }
+.allergen-chip span { color: var(--ink-soft); }
+.allergen-chip em { display: inline-flex; align-items: center; gap: var(--space-1); font-style: normal; font-weight: 700; color: var(--chilli-strong); }
+.allergen-chip--confirmed { border-left: 4px solid var(--chilli); }
+.allergen-chip--precautionary { border-left: 4px solid var(--turmeric); }
+.allergen-chip--possible { border-left: 4px solid var(--line); }
+.allergen-chip.is-yours { background: color-mix(in srgb, var(--chilli) 9%, var(--surface)); border-color: var(--chilli); }
+
+/* Scores */
+.score-rows { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.score-row { display: grid; gap: var(--space-2) var(--space-5); grid-template-columns: 11rem 1fr 1fr; align-items: center; }
+.score-row__label { font-weight: 600; font-size: var(--text-sm); }
+.score-row--strong .score-row__label { font-size: var(--text-base); font-weight: 800; }
+.score-row__cell { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-2) var(--space-3); border-radius: var(--radius); }
+.score-row__cell .meter { grid-column: 1 / -1; }
+.score-row__cell.is-leader { background: color-mix(in srgb, var(--leaf) 10%, transparent); }
+.score-row__name { font-size: 0.8125rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+.score-row__cell strong { font-size: var(--text-xl); font-variant-numeric: tabular-nums; }
+.score-row--strong .score-row__cell strong { font-size: 1.75rem; }
+.meter__fill--none { background: var(--ink-soft); opacity: 0.45; }
+
+/* Nutrition rows */
+.nrows { display: grid; }
+.nrow { display: grid; gap: var(--space-2) var(--space-4); grid-template-columns: 10rem 1fr 1fr; align-items: start; padding: var(--space-4) 0; border-top: var(--rule-thin) solid var(--line); }
+.nrow:first-child { border-top: 0; padding-top: 0; }
+.nrow__label { font-size: var(--text-base); padding-top: var(--space-2); }
+.nrow__note { grid-column: 2 / -1; font-size: var(--text-sm); color: var(--ink-soft); }
+.nrow__note--good { color: var(--leaf-strong); font-weight: 600; }
+.ncell { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius); background: var(--bg); border: 1px solid transparent; }
+.ncell.is-better { border-color: var(--leaf); background: color-mix(in srgb, var(--leaf) 8%, var(--surface)); }
+.ncell__who { font-size: 0.75rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ncell__value { font-size: var(--text-xl); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ncell__value small { font-size: var(--text-sm); font-weight: 600; color: var(--ink-soft); }
+.ncell__value--missing { font-size: var(--text-sm); font-weight: 600; color: var(--ink-soft); }
+.ncell__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+.rel-badge { padding: 2px var(--space-2); border-radius: 999px; background: var(--surface-muted); font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
+.better-tag { display: inline-flex; align-items: center; gap: 2px; font-size: 0.75rem; font-weight: 800; color: var(--leaf-strong); }
+.level-pill--none { background: var(--surface-muted); color: var(--ink-soft); }
+
+/* Ingredients */
+.cmp-facts { display: grid; gap: var(--space-1); margin-bottom: var(--space-5); font-size: var(--text-sm); color: var(--ink-soft); }
+.cmp-facts strong { color: var(--ink); }
+.ing-groups { display: grid; gap: var(--space-5); grid-template-columns: repeat(3, 1fr); }
+.ing-groups h3 { margin-bottom: var(--space-3); font-size: var(--text-sm); color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+.chip-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip-static { padding: 4px var(--space-3); border: 1px solid var(--line); border-radius: 999px; background: var(--bg); font-size: var(--text-sm); }
+.ing-groups > div:first-child .chip-static { border-color: var(--leaf); }
+
+/* Tablet and mobile */
+@media (max-width: 64rem) {
+  .allergen-groups, .ing-groups { grid-template-columns: 1fr; gap: var(--space-4); }
+  .score-row { grid-template-columns: 1fr 1fr; }
+  .score-row__label { grid-column: 1 / -1; }
+}
+@media (max-width: 40rem) {
+  .score-row__cell { grid-template-columns: 1fr; gap: var(--space-1); }
+  .score-row__cell .meter { grid-column: auto; }
+  .cmp-point, .cmp-alert { padding-inline: var(--space-3); gap: var(--space-2); }
+  .cmp-alert { padding-block: var(--space-3); }
+  .picker__slots { grid-template-columns: 1fr; }
+  .picker__swap { justify-self: center; transform: rotate(90deg); }
+  .cmp-heads { gap: var(--space-3); }
+  .cmp-head__flag { padding-inline: var(--space-2); font-size: 0.6875rem; }
+  .cmp-head__flag .nl-icon { display: none; }
+  .cmp-head { padding: var(--space-4) var(--space-3); }
+  .cmp-pair { grid-template-columns: 1fr; }
+  .nrow { grid-template-columns: 1fr 1fr; }
+  .nrow__label { grid-column: 1 / -1; padding-top: 0; }
+  .nrow__note { grid-column: 1 / -1; }
+  .ncell { padding: var(--space-3) var(--space-2); }
+  .card__head .search { flex: 1 1 100%; max-width: none; }
+  .card__head { flex-wrap: wrap; }
+}
