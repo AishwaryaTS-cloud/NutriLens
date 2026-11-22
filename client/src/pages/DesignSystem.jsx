@@ -54,7 +54,7 @@ export default function DesignSystem() {
 
       <Section
         title="Type"
-        note="Bricolage Grotesque for headings, IBM Plex Sans for reading. Numbers use tabular figures so columns line up."
+        note="Plus Jakarta Sans for every heading and every line of text. Numbers use tabular figures so columns line up."
       >
         <p className="ds-type ds-type--display">Display</p>
         <p className="ds-type ds-type--heading">Heading</p>

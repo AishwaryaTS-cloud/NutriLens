@@ -58,11 +58,10 @@ function NameSection() {
   }
 
   return (
-    <section className="nl-label prefs__panel" aria-labelledby="name-title">
-      <h2 id="name-title" className="nl-label__title">
-        Your name
-      </h2>
-      <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
+    <section className="card prefs__panel" aria-labelledby="name-title">
+      <div className="card__head">
+        <h2 id="name-title" className="card__title">Profile</h2>
+      </div>
       <form onSubmit={handleSubmit} noValidate className="prefs__form">
         <FormField
           label="Display name"
@@ -173,11 +172,10 @@ export default function Preferences() {
       <>
         <NameSection />
 
-        <section className="nl-label prefs__panel" aria-labelledby="prefs-title">
-          <h2 id="prefs-title" className="nl-label__title">
-            Your preferences
-          </h2>
-          <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
+        <section className="card prefs__panel" aria-labelledby="prefs-title">
+          <div className="card__head">
+            <h2 id="prefs-title" className="card__title">Diet, nutrients and allergens</h2>
+          </div>
 
           <form ref={formRef} onSubmit={handleSave} noValidate className="prefs__form">
             {formError && (
@@ -195,11 +193,11 @@ export default function Preferences() {
                 value={form.dietaryPreference}
                 onChange={(value) => change((current) => ({ ...current, dietaryPreference: value }))}
                 error={errors.dietaryPreference}
-                hint="Saved with your profile for future dietary checks. It doesn’t change any score yet."
+                hint="Used to flag ingredients that don’t fit your diet and to adjust the ingredient score."
               />
             </div>
 
-            <div className="nl-rule nl-rule--medium" aria-hidden="true" />
+            <hr className="prefs__divider" />
 
             <div className="prefs__section">
               <h3 className="prefs__heading">Nutrient priorities</h3>
@@ -228,7 +226,7 @@ export default function Preferences() {
               </div>
             </div>
 
-            <div className="nl-rule nl-rule--medium" aria-hidden="true" />
+            <hr className="prefs__divider" />
 
             <div className="prefs__section">
               <AllergenPicker
@@ -274,13 +272,13 @@ export default function Preferences() {
   }
 
   return (
-    <section className="nl-container prefs">
+    <section className="nl-container page prefs">
       <header className="prefs__header">
-        <p className="nl-eyebrow">{onboarding ? 'Welcome to NutriLens' : 'Your profile'}</p>
-        <h1 className="prefs__title">{onboarding ? 'Set your preferences' : 'Your preferences'}</h1>
-        <p className="prefs__lead">
-          Tell NutriLens what matters to you. You can change any of this later. Scanning isn’t available yet, so
-          nothing here changes a score today.
+        <p className="nl-eyebrow">{onboarding ? 'Welcome to NutriLens' : 'Profile'}</p>
+        <h1 className="page__title">{onboarding ? 'Set your preferences' : 'Profile and preferences'}</h1>
+        <p className="page__lead">
+          Tell NutriLens what matters to you. Your diet, nutrient goals and allergens shape every Personal Match Score,
+          and you can change them at any time.
         </p>
         {showSkip && (
           <Link to="/dashboard" className="nl-btn nl-btn--ghost nl-btn--sm">

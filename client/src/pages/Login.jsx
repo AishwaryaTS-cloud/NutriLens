@@ -56,14 +56,12 @@ export default function Login() {
         <p className="nl-eyebrow">Welcome back</p>
         <h1 className="auth__title">Log in to NutriLens</h1>
         <p className="auth__lead">
-          Your account is where your food preferences and label history will live as NutriLens
-          grows.
+          Pick up where you left off: your scan history, comparisons and preferences are waiting.
         </p>
       </div>
 
-      <div className="nl-label auth__card">
-        <h2 className="nl-label__title">Log in</h2>
-        <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
+      <div className="card auth__card">
+        <h2 className="card__title auth__card-title">Log in</h2>
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate className="auth__form">
           {formError && (

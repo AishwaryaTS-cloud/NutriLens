@@ -7,15 +7,14 @@ import { toApiError } from '../services/apiError.js';
 import { fetchSummary } from '../services/scanService.js';
 import { ScoreBadge } from './History.jsx';
 
-function memberSince(createdAt) {
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
 
-function Stat({ label, value, note }) {
+function Stat({ label, value, note, tone }) {
   return (
-    <div className="stat">
+    <div className={`stat-card${tone ? ` stat-card--${tone}` : ''}`}>
       <dt>{label}</dt>
       <dd>{value}</dd>
       {note && <small>{note}</small>}
@@ -23,7 +22,18 @@ function Stat({ label, value, note }) {
   );
 }
 
-/** Protected page: scan statistics, recent scans, account details and saved preferences. */
+function EmptyState() {
+  return (
+    <div className="empty-state">
+      <span className="empty-state__icon"><Icon name="scan" size={28} /></span>
+      <h3>Scan your first product</h3>
+      <p>Take a photo of a food label. NutriLens reads it, checks it against your allergens and goals, and explains the result.</p>
+      <Link to="/scan" className="nl-btn nl-btn--primary">Scan a product</Link>
+    </div>
+  );
+}
+
+/** Signed-in home: scan call to action, real statistics, recent scans and saved preferences. */
 export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user.name.split(' ')[0];
@@ -40,66 +50,66 @@ export default function Dashboard() {
   const s = state.summary;
 
   return (
-    <section className="nl-container dashboard">
-      <header>
-        <p className="nl-eyebrow">Dashboard</p>
-        <h1 className="dashboard__title">Welcome, {firstName}.</h1>
-        <p className="dashboard__lead">Scan a label, check what Gemini read, and see how the product matches your goals and allergens.</p>
+    <section className="nl-container page">
+      <header className="page__head">
+        <div>
+          <p className="nl-eyebrow">{greeting()}</p>
+          <h1 className="page__title">Welcome back, {firstName}</h1>
+          <p className="page__lead">Scan a label to see how a product fits your goals and allergens.</p>
+        </div>
+        <Link to="/scan" className="nl-btn nl-btn--primary nl-btn--lg"><Icon name="scan" size={20} /> Scan a product</Link>
       </header>
 
-      <div className="dashboard__grid">
-        <div className="dashboard__stack">
-          <section className="nl-label" aria-labelledby="stats-title">
-            <h2 id="stats-title" className="nl-label__title">Your scans</h2>
-            <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
-            {state.status === 'loading' && <p role="status"><Icon name="loader" size={20} className="nl-spin" /> Loading…</p>}
-            {state.status === 'error' && <p className="nl-alert" role="alert"><Icon name="alert" size={20} /><span>{state.error.message}</span></p>}
-            {s && s.total === 0 && <p>You have not saved any scans yet.</p>}
-            {s && s.total > 0 && (
-              <dl className="stats">
-                <Stat label="Saved scans" value={s.total} note={`up to ${s.maxSavedScans}`} />
-                <Stat label="Average score" value={s.averageScore ?? '—'} note="scored products only" />
-                <Stat label="Strong matches" value={s.bands.strong} note="score 70 or more" />
-                <Stat label="Weak matches" value={s.bands.weak} note="score below 50" />
-                <Stat label="Allergen conflicts" value={s.allergenConflicts} note="confirmed" />
-                <Stat label="Allergen info incomplete" value={s.incompleteAllergenInfo} />
+      {state.status === 'loading' && <p className="page-loading" role="status"><Icon name="loader" size={20} className="nl-spin" /> Loading your dashboard…</p>}
+      {state.status === 'error' && <p className="nl-alert" role="alert"><Icon name="alert" size={20} /><span>{state.error.message}</span></p>}
+
+      {s && (
+        <div className="dash-grid">
+          <div className="dash-main">
+            {s.total > 0 && (
+              <dl className="stat-grid" aria-label="Your scan statistics">
+                <Stat label="Saved scans" value={s.total} note={`of ${s.maxSavedScans} allowed`} />
+                <Stat label="Average score" value={s.averageScore ?? '—'} note="scored products" />
+                <Stat label="Strong matches" value={s.bands.strong} note="score 70 or more" tone="good" />
+                <Stat label="Allergen conflicts" value={s.allergenConflicts} note="confirmed" tone={s.allergenConflicts > 0 ? 'warn' : undefined} />
               </dl>
             )}
-            {s && s.recent.length > 0 && (
-              <>
-                <h3 className="dashboard__next-title">Recent</h3>
-                <ul className="history__list history__list--compact">
+
+            <section className="card" aria-labelledby="recent-title">
+              <div className="card__head">
+                <h2 id="recent-title" className="card__title">Recent scans</h2>
+                {s.total > 0 && <Link to="/history" className="card__link">View all <Icon name="arrow" size={16} /></Link>}
+              </div>
+              {s.recent.length === 0 ? <EmptyState /> : (
+                <ul className="scan-list">
                   {s.recent.map((scan) => (
-                    <li key={scan.id} className="history__item">
-                      <div className="history__info">
-                        <Link to={`/history/${scan.id}`} className="history__name">{scan.productName ?? 'Unnamed product'}</Link>
-                        {scan.allergenConflict && <span className="badge badge--confirmed">Allergen conflict</span>}
-                      </div>
-                      <ScoreBadge score={scan.finalScore} />
+                    <li key={scan.id}>
+                      <Link to={`/history/${scan.id}`} className="scan-row">
+                        <span className="scan-row__main">
+                          <span className="scan-row__name">{scan.productName ?? 'Unnamed product'}</span>
+                          {scan.allergenConflict && <span className="badge badge--confirmed">Allergen conflict</span>}
+                        </span>
+                        <ScoreBadge score={scan.finalScore} />
+                        <Icon name="arrow" size={18} className="scan-row__go" />
+                      </Link>
                     </li>
                   ))}
                 </ul>
-              </>
-            )}
-            <div className="review__actions">
-              <Link to="/scan" className="nl-btn nl-btn--primary">Scan a label</Link>
-              <Link to="/history" className="nl-btn nl-btn--outline">History and compare</Link>
-            </div>
-          </section>
+              )}
+            </section>
+          </div>
 
-          <PreferencesSummary />
+          <aside className="dash-side">
+            <PreferencesSummary />
+            <nav className="card quick" aria-label="Quick access">
+              <h2 className="card__title">Quick access</h2>
+              <Link to="/history"><Icon name="history" size={20} /> Scan history</Link>
+              <Link to="/compare"><Icon name="compare" size={20} /> Compare products</Link>
+              <Link to="/preferences"><Icon name="user" size={20} /> Profile and preferences</Link>
+            </nav>
+          </aside>
         </div>
-
-        <section className="nl-label" aria-labelledby="account-title">
-          <h2 id="account-title" className="nl-label__title">Your account</h2>
-          <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
-          <dl className="nl-label__rows">
-            <div className="nl-label__row"><dt>Name</dt><dd>{user.name}</dd></div>
-            <div className="nl-label__row"><dt>Email</dt><dd>{user.email}</dd></div>
-            <div className="nl-label__row"><dt>Member since</dt><dd>{memberSince(user.createdAt)}</dd></div>
-          </dl>
-        </section>
-      </div>
+      )}
     </section>
   );
 }

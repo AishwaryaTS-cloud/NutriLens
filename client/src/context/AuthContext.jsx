@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
     setState(SIGNED_OUT);
   }, []);
 
-  // Phase 2: lets the profile page refresh the signed-in user after a name change.
+  // Lets the profile page refresh the signed-in user after a name change.
   const updateUser = useCallback((user) => {
     setState((current) => (current.status === 'authenticated' ? { ...current, user } : current));
   }, []);

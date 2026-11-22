@@ -27,3 +27,11 @@ export function GuestRoute() {
   if (status === 'authenticated') return <Navigate to="/dashboard" replace />;
   return <Outlet />;
 }
+
+/** The home page: visitors see the landing page, signed-in users go straight to their dashboard. */
+export function HomeRoute({ children }) {
+  const { status } = useAuth();
+  if (status === 'loading') return <PageLoading label="Loading…" />;
+  if (status === 'authenticated') return <Navigate to="/dashboard" replace />;
+  return children;
+}

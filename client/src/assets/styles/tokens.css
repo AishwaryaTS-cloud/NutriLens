@@ -5,8 +5,10 @@
 */
 :root {
   /* Typography */
-  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  /* The ONE app font. Change it here (and the <link> in index.html) and everything follows. */
+  --font-sans: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
 
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -32,10 +34,11 @@
   --space-9: 6rem;
 
   /* Shape */
-  --radius-sm: 4px;
-  --radius: 8px;
+  --radius-sm: 6px;
+  --radius: 10px;
   --radius-lg: 16px;
   --container: 72rem;
+  --header-h: 4rem;
 
   /* Label rules (the signature of the interface) */
   --rule-heavy: 8px;

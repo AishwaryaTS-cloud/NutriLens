@@ -20,8 +20,9 @@ export default function ScanDetail() {
     return () => { cancelled = true; };
   }, [id]);
 
+  const [confirming, setConfirming] = useState(false);
+
   async function remove() {
-    if (!window.confirm('Delete this scan? This cannot be undone.')) return;
     try {
       await deleteScan(id);
       navigate('/history');
@@ -31,15 +32,23 @@ export default function ScanDetail() {
   }
 
   return (
-    <section className="nl-container scan">
-      <p><Link to="/history">← Back to history</Link></p>
+    <section className="nl-container page scan">
+      <p><Link to="/history" className="card__link"><Icon name="arrow" size={16} className="flip" /> Back to history</Link></p>
       {state.status === 'loading' && <p role="status"><Icon name="loader" size={20} className="nl-spin" /> Loading…</p>}
       {state.error && <p className="nl-alert" role="alert"><Icon name="alert" size={20} /><span>{state.error.message}</span></p>}
       {state.scan && (
         <AnalysisView analysis={state.scan.analysis} explanation={state.scan.explanation}>
           <div className="result-actions">
-            <Link className="nl-btn nl-btn--outline" to="/scan">Scan another label</Link>
-            <button type="button" className="nl-btn nl-btn--ghost" onClick={remove}>Delete this scan</button>
+            <Link className="nl-btn nl-btn--primary" to="/scan">Scan another label</Link>
+            {confirming ? (
+              <>
+                <span className="result-actions__saved">Delete this scan?</span>
+                <button type="button" className="nl-btn nl-btn--danger nl-btn--sm" onClick={remove}>Delete</button>
+                <button type="button" className="nl-btn nl-btn--ghost nl-btn--sm" onClick={() => setConfirming(false)}>Cancel</button>
+              </>
+            ) : (
+              <button type="button" className="nl-btn nl-btn--ghost" onClick={() => setConfirming(true)}><Icon name="trash" size={18} /> Delete this scan</button>
+            )}
           </div>
         </AnalysisView>
       )}

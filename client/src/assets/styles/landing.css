@@ -1,0 +1,75 @@
+/* Public landing page. */
+.hero { padding-block: var(--space-8) var(--space-8); background: radial-gradient(60rem 28rem at 85% -10%, color-mix(in srgb, var(--leaf) 10%, transparent), transparent 70%); }
+.hero__inner { display: grid; gap: var(--space-7); align-items: center; }
+.hero__title { font-size: var(--text-display); line-height: 1.04; letter-spacing: -0.04em; max-width: 14ch; }
+.hero__lead { margin-top: var(--space-5); max-width: 36rem; font-size: var(--text-lg); color: var(--ink-soft); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+.hero__fine { margin-top: var(--space-4); font-size: var(--text-sm); color: var(--ink-soft); }
+
+.nl-btn--lg { min-height: 52px; padding: 0 var(--space-6); font-size: var(--text-base); }
+.nl-btn--on-dark { background: var(--on-leaf); color: var(--leaf-strong); }
+.nl-btn--on-dark:hover:not(:disabled) { background: var(--surface); color: var(--leaf-strong); }
+
+/* Example result card (illustration of the real results screen) */
+.example { margin: 0; border: var(--rule-thin) solid var(--line); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-2); overflow: hidden; }
+.example__bar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: var(--rule-thin) solid var(--line); background: var(--surface-muted); font-size: var(--text-sm); font-weight: 600; color: var(--ink-soft); }
+.example__tag { padding: 2px 8px; border-radius: 999px; background: var(--leaf); color: var(--on-leaf); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.example__body { padding: var(--space-5); display: grid; gap: var(--space-5); }
+.example__score { display: flex; align-items: center; gap: var(--space-4); }
+.example__label { font-size: var(--text-sm); color: var(--ink-soft); }
+.example__product { font-size: var(--text-lg); font-weight: 700; }
+.example__muted { font-size: var(--text-sm); color: var(--leaf); font-weight: 600; }
+.example__levels { display: grid; }
+.example__levels li { display: grid; grid-template-columns: 1fr auto 5.5rem; gap: var(--space-3); align-items: center; padding: var(--space-3) 0; border-top: var(--rule-thin) solid var(--line); font-size: var(--text-sm); }
+.example__value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.example__allergen { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: color-mix(in srgb, var(--turmeric) 20%, transparent); font-size: var(--text-sm); font-weight: 600; }
+
+/* Sections */
+.section { padding-block: var(--space-8); }
+.section--tint { background: var(--surface); border-block: var(--rule-thin) solid var(--line); }
+.section__head { max-width: 40rem; margin-bottom: var(--space-7); }
+.section__title { font-size: var(--text-2xl); }
+
+.feature-grid { display: grid; gap: var(--space-5); grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
+@media (min-width: 60rem) { .feature-grid { grid-template-columns: repeat(3, 1fr); } }
+.feature { padding: var(--space-5); border: var(--rule-thin) solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.feature__icon { display: inline-grid; place-items: center; width: 44px; height: 44px; margin-bottom: var(--space-4); border-radius: var(--radius); background: color-mix(in srgb, var(--leaf) 12%, transparent); color: var(--leaf); }
+.feature__title { margin-bottom: var(--space-2); font-size: var(--text-lg); }
+.feature p, .steps__item p { color: var(--ink-soft); font-size: var(--text-sm); }
+
+.steps { display: grid; gap: var(--space-6); grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); counter-reset: s; }
+.steps__num { display: inline-grid; place-items: center; width: 40px; height: 40px; margin-bottom: var(--space-4); border-radius: 50%; background: var(--leaf); color: var(--on-leaf); font-weight: 800; }
+.steps__title { margin-bottom: var(--space-2); font-size: var(--text-lg); }
+
+.split { display: grid; gap: var(--space-7); align-items: center; }
+.split__lead { margin-top: var(--space-4); color: var(--ink-soft); font-size: var(--text-lg); max-width: 34rem; }
+.checklist { display: grid; gap: var(--space-3); margin-top: var(--space-5); }
+.checklist li { display: flex; align-items: center; gap: var(--space-3); font-weight: 600; }
+.checklist .nl-icon { color: var(--leaf); }
+.split__panel { padding: var(--space-6); border-radius: var(--radius-lg); border: var(--rule-thin) solid var(--line); background: var(--surface); }
+.split__panel--allergen { border-left: 4px solid var(--turmeric); }
+.split__panel-title { margin-bottom: var(--space-3); font-size: var(--text-xl); }
+.split__panel p { color: var(--ink-soft); }
+.split__panel-note { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-4); font-size: var(--text-sm); font-weight: 600; color: var(--leaf) !important; }
+
+.compare-demo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.compare-demo__col { padding: var(--space-5); border: var(--rule-thin) solid var(--line); border-radius: var(--radius-lg); background: var(--bg); }
+.compare-demo__col span { display: block; font-size: var(--text-sm); color: var(--ink-soft); font-weight: 600; }
+.compare-demo__col strong { display: block; margin-block: var(--space-2) var(--space-3); font-size: 2.75rem; line-height: 1; color: var(--leaf); }
+.compare-demo__col i { display: block; height: 8px; border-radius: 999px; background: var(--leaf); }
+.compare-demo__col--b strong { color: var(--ink-soft); }
+.compare-demo__col--b i { background: var(--turmeric); }
+
+.cta { background: var(--leaf-strong); color: var(--on-leaf); }
+.cta__inner { display: grid; gap: var(--space-4); justify-items: start; padding-block: var(--space-8); }
+.cta__title { max-width: 22ch; font-size: var(--text-3xl); color: var(--on-leaf); }
+.cta p { max-width: 32rem; opacity: 0.9; }
+
+@media (min-width: 60rem) {
+  .hero__inner { grid-template-columns: 1.1fr 0.9fr; }
+  .split { grid-template-columns: 1fr 1fr; }
+  .split--reverse > :first-child { order: 0; }
+}
+
+/* The landing page ends with the CTA band, so the footer sits flush against it. */
+.nl-main:has(.cta) + .nl-footer { margin-top: 0; }

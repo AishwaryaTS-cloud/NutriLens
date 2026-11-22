@@ -51,14 +51,13 @@ export default function Register() {
         <p className="nl-eyebrow">Get started</p>
         <h1 className="auth__title">Create your NutriLens account</h1>
         <p className="auth__lead">
-          Free to use. Your password is stored only as a salted hash, and your session cookie can’t
-          be read by page scripts.
+          Free to use. Save your scans, set your diet and allergens, and compare products. Your password
+          is stored securely.
         </p>
       </div>
 
-      <div className="nl-label auth__card">
-        <h2 className="nl-label__title">Create account</h2>
-        <div className="nl-rule nl-rule--heavy" aria-hidden="true" />
+      <div className="card auth__card">
+        <h2 className="card__title auth__card-title">Create account</h2>
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate className="auth__form">
           {formError && (

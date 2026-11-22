@@ -55,33 +55,11 @@ export function AllergenPanel({ match }) {
   );
 }
 
-function ScoreHeader({ analysis, title }) {
-  const { match, label } = analysis;
-  const tone = scoreTone(match.finalScore);
-  return (
-    <header className="result-head">
-      <div className={`score-ring score-ring--${tone}`} role="img" aria-label={match.finalScore === null ? 'No Personal Match Score' : `Personal Match Score ${match.finalScore} out of 100`}>
-        <span className="score-ring__value">{match.finalScore === null ? '—' : match.finalScore}</span>
-        <span className="score-ring__of">{match.finalScore === null ? 'no score' : 'out of 100'}</span>
-      </div>
-      <div>
-        <p className="nl-eyebrow">Personal Match Score</p>
-        <h1 className="result-head__title">{title ?? label.productName ?? 'Unnamed product'}</h1>
-        {label.brand && <p className="result-head__brand">{label.brand}</p>}
-        <p className="result-head__sub">
-          {match.finalScore === null ? 'Too little nutrition data to calculate a score.' : <>Base score {fmt(match.baseScore)}{match.allergenPenalty.total > 0 && <> − allergen penalty {match.allergenPenalty.total}</>}{match.allergenPenalty.ceilingApplied && <> (limited to {match.allergenPenalty.ceiling} because of a confirmed allergen)</>}.</>}
-        </p>
-        {match.status === 'partial' && <p className="badge badge--warn">Partial data: see limitations</p>}
-      </div>
-    </header>
-  );
-}
-
 function Breakdown({ match }) {
   const names = Object.keys(match.components);
   return (
-    <section className="result-card" aria-labelledby="breakdown-title">
-      <h2 id="breakdown-title" className="result-card__title">How the score was calculated</h2>
+    <details className="more" aria-labelledby="breakdown-title">
+      <summary id="breakdown-title">How the score was calculated</summary>
       <p className="nl-field__hint">Score = Personal Preference × 0.50 + Nutrition Quality × 0.30 + Ingredients × 0.20, then allergen penalties. These numbers are calculated by NutriLens, never by AI.</p>
       <div className="table-wrap">
         <table className="result-table">
@@ -110,7 +88,7 @@ function Breakdown({ match }) {
         </table>
       </div>
       {match.components.preference.weightUsed !== match.components.preference.nominalWeight && match.finalScore !== null && <p className="nl-field__hint">Some parts were not available, so the weights were scaled to add up to 100%.</p>}
-    </section>
+    </details>
   );
 }
 
@@ -119,8 +97,8 @@ function NutrientTable({ analysis }) {
   const prefs = Object.fromEntries(match.details.preference.items.map((i) => [i.nutrient, i]));
   const quality = Object.fromEntries(match.details.quality.items.map((i) => [i.nutrient, i]));
   return (
-    <section className="result-card" aria-labelledby="nutrient-title">
-      <h2 id="nutrient-title" className="result-card__title">Nutrient levels (per 100 {label.per100Unit})</h2>
+    <details className="more" aria-labelledby="nutrient-title">
+      <summary id="nutrient-title">Full nutrient table (per 100 {label.per100Unit})</summary>
       <p className="nl-field__hint">Low / medium / high use project-defined limits, not medical or official classifications.</p>
       <div className="table-wrap">
         <table className="result-table">
@@ -144,6 +122,91 @@ function NutrientTable({ analysis }) {
       </div>
       {match.details.preference.missing.length > 0 && <p className="nl-field__hint">Missing for your goals (not treated as zero): {match.details.preference.missing.join(', ')}.</p>}
       {analysis.label.per100g && analysis.per100Source && Object.values(analysis.per100Source).includes('converted_from_serving') && <p className="nl-field__hint">Some values were converted from per serving to per 100 using V100 = (Vs ÷ serving size) × 100.</p>}
+    </details>
+  );
+}
+
+
+const BAND = (score) => (score === null || score === undefined ? 'No score' : score >= 70 ? 'Strong match' : score >= 50 ? 'Fair match' : 'Weak match');
+
+function summarySentence(match) {
+  if (match.finalScore === null) return 'There is too little nutrition data to calculate a score.';
+  if (match.allergenPenalty.hasConfirmedConflict) return 'This product contains an allergen you avoid, so the score is capped. Read the allergen warning first.';
+  if (match.finalScore >= 70) return 'This product fits your preferences well.';
+  if (match.finalScore >= 50) return 'This product is a fair fit. Some things don’t line up with your goals.';
+  return 'This product doesn’t fit your goals well.';
+}
+
+function ScoreCard({ name, score, hint }) {
+  const tone = scoreTone(score);
+  return (
+    <div className="mini-score">
+      <div className="mini-score__top"><span>{name}</span><strong>{score === null || score === undefined ? '—' : Math.round(score)}</strong></div>
+      <div className="meter" role="img" aria-label={score === null || score === undefined ? `${name}: not available` : `${name} ${Math.round(score)} out of 100`}>
+        <span className={`meter__fill meter__fill--${tone}`} style={{ width: `${score === null || score === undefined ? 0 : Math.max(0, Math.min(100, score))}%` }} />
+      </div>
+      <small>{hint}</small>
+    </div>
+  );
+}
+
+function ScoreHeader({ analysis, title }) {
+  const { match, label } = analysis;
+  const tone = scoreTone(match.finalScore);
+  const c = match.components;
+  return (
+    <header className="result-hero">
+      <div className="result-hero__main">
+        <div className={`score-ring score-ring--${tone}`} role="img" aria-label={match.finalScore === null ? 'No Personal Match Score' : `Personal Match Score ${match.finalScore} out of 100`}>
+          <span className="score-ring__value">{match.finalScore === null ? '—' : match.finalScore}</span>
+          <span className="score-ring__of">{match.finalScore === null ? 'no score' : 'out of 100'}</span>
+        </div>
+        <div className="result-hero__text">
+          <p className="nl-eyebrow">Personal Match Score</p>
+          <h1 className="result-hero__title">{title ?? label.productName ?? 'Unnamed product'}</h1>
+          {label.brand && <p className="result-head__brand">{label.brand}</p>}
+          <p className={`result-hero__band result-hero__band--${tone}`}>{BAND(match.finalScore)}</p>
+          <p className="result-hero__sum">{summarySentence(match)}</p>
+          {match.status === 'partial' && <p className="badge badge--warn badge--flush">Partial data: see limitations</p>}
+        </div>
+      </div>
+      <div className="mini-scores">
+        <ScoreCard name="Your preferences" score={c.preference.score} hint="How well it fits your goals" />
+        <ScoreCard name="Nutrition quality" score={c.quality.score} hint="Overall nutritional balance" />
+        <ScoreCard name="Ingredient score" score={c.ingredient.score} hint="What the ingredient list says" />
+      </div>
+    </header>
+  );
+}
+
+const GOOD_WHEN_HIGH = new Set(['protein', 'fibre']);
+
+function NutrientGrid({ analysis }) {
+  const { nutrients, label, match } = analysis;
+  const dir = Object.fromEntries(match.details.quality.items.map((i) => [i.nutrient, i.direction]));
+  const items = Object.values(nutrients).filter((n) => n.value !== null || n.scored);
+  return (
+    <section className="result-card" aria-labelledby="nutrient-grid-title">
+      <h2 id="nutrient-grid-title" className="result-card__title">Nutrition at a glance</h2>
+      <p className="nl-field__hint">Per 100 {label.per100Unit}. Low, medium and high use NutriLens limits, not medical classifications.</p>
+      <ul className="nutrient-grid">
+        {items.map((n) => {
+          const goodHigh = GOOD_WHEN_HIGH.has(n.nutrient) || dir[n.nutrient] === 'higher';
+          const lvl = n.level ? n.level.toLowerCase() : null;
+          const tone = !lvl ? 'none' : goodHigh ? (lvl === 'high' ? 'good' : lvl === 'low' ? 'poor' : 'fair') : (lvl === 'low' ? 'good' : lvl === 'medium' ? 'fair' : 'poor');
+          const pct = n.value === null ? 0 : Math.min(100, (n.value / (n.medium * 1.5 || 1)) * 100);
+          return (
+            <li key={n.nutrient} className="nutrient">
+              <div className="nutrient__top">
+                <span className="nutrient__name">{n.label}</span>
+                {n.level && <span className={`level-pill level-pill--${tone}`}>{LEVEL_TEXT[n.level]}</span>}
+              </div>
+              <p className="nutrient__value">{n.value === null ? <em>not available</em> : <>{fmt(n.value)}<small> {n.unit}</small></>}</p>
+              <div className="meter meter--thin" aria-hidden="true"><span className={`meter__fill meter__fill--${tone}`} style={{ width: `${pct}%` }} /></div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -152,9 +215,9 @@ function IngredientCard({ match }) {
   const ing = match.details.ingredient;
   return (
     <section className="result-card" aria-labelledby="ingredient-title">
-      <h2 id="ingredient-title" className="result-card__title">Ingredients {ing.score !== null && <span className="badge">score {fmt(ing.score)}</span>}</h2>
+      <h2 id="ingredient-title" className="result-card__title">Ingredient analysis {ing.score !== null && <span className="badge">score {fmt(ing.score)}</span>}</h2>
       {!ing.applicable && <p>No ingredient list was available, so ingredients were not scored.</p>}
-      {ing.applicable && ing.findings.length === 0 && <p>No scoring rule applied to this list (neutral base of {ing.base}).</p>}
+      {ing.applicable && ing.findings.length === 0 && <p>Nothing in the ingredient list stood out, so the ingredient score stays neutral.</p>}
       {ing.findings.length > 0 && (
         <ul className="finding-list">
           {ing.findings.map((f, index) => (
@@ -173,32 +236,50 @@ function IngredientCard({ match }) {
 function Explanation({ explanation }) {
   if (!explanation) return null;
   const { source, fallbackReason, content: e } = explanation;
+  const recs = [...e.suggestions.map((t) => ({ t, kind: 'tip' })), ...e.cautions.map((t) => ({ t, kind: 'care' }))];
   return (
-    <section className="result-card explain" aria-labelledby="explain-title">
-      <h2 id="explain-title" className="result-card__title">Explanation <span className={`badge ${source === 'gemini' ? 'badge--ai' : ''}`}>{source === 'gemini' ? 'Written by Gemini from the calculated results' : 'Basic explanation'}</span></h2>
-      {source !== 'gemini' && fallbackReason && <p className="nl-field__hint">{FALLBACK_TEXT[fallbackReason] ?? 'Gemini was not used.'} This text is built directly from the calculated results.</p>}
-      <p className="explain__lead">{e.overview}</p>
-      <h3>Nutrition</h3>
-      <p>{e.nutritionExplanation}</p>
-      {e.nutrientLevels.length > 0 && <ul>{e.nutrientLevels.map((l) => <li key={l.nutrient}><strong>{l.nutrient}:</strong> {l.text}</li>)}</ul>}
-      <h3>Ingredients</h3>
-      <p>{e.ingredientExplanation}</p>
-      <h3>Allergens</h3>
-      <ul>{e.allergenWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-      <h3>Your Personal Match Score</h3>
-      <p>{e.personalMatchExplanation}</p>
-      <div className="explain__cols">
-        {e.advantages.length > 0 && <div><h3>Advantages</h3><ul>{e.advantages.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-        {e.disadvantages.length > 0 && <div><h3>Disadvantages</h3><ul>{e.disadvantages.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-      </div>
-      {e.suggestions.length > 0 && <><h3>Suggestions</h3><ul>{e.suggestions.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
-      {e.cautions.length > 0 && <><h3>Be careful about</h3><ul>{e.cautions.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
-      <p className="nl-field__hint">Not medical advice. Check the printed label, especially if you have an allergy.</p>
-    </section>
+    <>
+      <section className="result-card explain" aria-labelledby="explain-title">
+        <h2 id="explain-title" className="result-card__title">Explanation <span className={`badge ${source === 'gemini' ? 'badge--ai' : ''}`}>{source === 'gemini' ? 'Written by Gemini from the calculated results' : 'Basic explanation'}</span></h2>
+        {source !== 'gemini' && fallbackReason && <p className="nl-field__hint">{FALLBACK_TEXT[fallbackReason] ?? 'Gemini was not used.'} This text is built directly from the calculated results.</p>}
+        <p className="explain__lead">{e.overview}</p>
+        <h3>Nutrition</h3>
+        <p>{e.nutritionExplanation}</p>
+        {e.nutrientLevels.length > 0 && (
+          <details className="explain__details">
+            <summary>How each nutrient level was decided</summary>
+            <ul>{e.nutrientLevels.map((l) => <li key={l.nutrient}><strong>{l.nutrient}:</strong> {l.text}</li>)}</ul>
+          </details>
+        )}
+        <h3>Ingredients</h3>
+        <p>{e.ingredientExplanation}</p>
+        <h3>Allergens</h3>
+        <ul>{e.allergenWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+        <h3>Your Personal Match Score</h3>
+        <p>{e.personalMatchExplanation}</p>
+        {(e.advantages.length > 0 || e.disadvantages.length > 0) && (
+          <div className="explain__cols">
+            {e.advantages.length > 0 && <div className="pros"><h3>What works</h3><ul>{e.advantages.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+            {e.disadvantages.length > 0 && <div className="cons"><h3>What doesn’t</h3><ul>{e.disadvantages.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+          </div>
+        )}
+      </section>
+      {recs.length > 0 && (
+        <section className="result-card" aria-labelledby="recs-title">
+          <h2 id="recs-title" className="result-card__title">Recommendations</h2>
+          <ul className="rec-list">
+            {recs.map((r, i) => (
+              <li key={i} className={`rec rec--${r.kind}`}><Icon name={r.kind === 'tip' ? 'leaf' : 'alert'} size={20} /><span>{r.t}</span></li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <p className="disclaimer">Not medical advice. Check the printed label, especially if you have an allergy.</p>
+    </>
   );
 }
 
-/** The complete result: allergens first, then score, calculation, nutrients, ingredients and explanation. */
+/** The complete result: score summary, allergens, nutrition, ingredients, explanation and recommendations. */
 export default function AnalysisView({ analysis, explanation, title, children }) {
   const { match } = analysis;
   return (
@@ -209,13 +290,16 @@ export default function AnalysisView({ analysis, explanation, title, children })
       {match.limitations.length > 0 && (
         <section className="result-card result-card--limits" aria-labelledby="limits-title">
           <h2 id="limits-title" className="result-card__title">Limitations of this result</h2>
-          <ul>{match.limitations.map((l, i) => <li key={i}>{l}</li>)}</ul>
+          <ul className="muted-list">{match.limitations.map((l, i) => <li key={i}>{l}</li>)}</ul>
         </section>
       )}
-      <Breakdown match={match} />
-      <NutrientTable analysis={analysis} />
+      <NutrientGrid analysis={analysis} />
       <IngredientCard match={match} />
       <Explanation explanation={explanation} />
+      <div className="more-wrap">
+        <Breakdown match={match} />
+        <NutrientTable analysis={analysis} />
+      </div>
     </div>
   );
 }
