@@ -79,3 +79,6 @@ See `docs/SETUP.md`.
 - Never commit `.env` files, keys, connection strings or user data. `.gitignore` blocks them; only `.env.example` is tracked.
 - The API validates its environment at start-up and never prints secret values in errors.
 
+## Sign-in methods
+
+Email + password, **email codes** (sign-up verification and passwordless login) and **Google** sign-in all share one JWT-cookie session. Setup (Gmail App Password, Brevo, Google Cloud), testing and troubleshooting: [docs/AUTH.md](docs/AUTH.md).

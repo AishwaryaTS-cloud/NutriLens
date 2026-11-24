@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import {
   TEST_JWT_SECRET,
   TEST_ORIGIN,
+  codeFor,
   cookieFrom,
   makeTestApp,
   postJson,
@@ -14,14 +15,22 @@ import {
   withServer,
 } from './helpers.js';
 
+// Registration is two steps now: `register` starts it (and emails a code); `registerAccount` also
+// enters that code and returns the response that creates the account and sets the cookie.
 const register = (url, body = validUser, headers) => postJson(url, '/api/auth/register', body, headers);
+async function registerAccount(url, body = validUser, headers) {
+  const start = await register(url, body, headers);
+  assert.equal(start.status, 202, start.text);
+  const email = body.email.trim().toLowerCase();
+  return postJson(url, '/api/auth/register/verify', { email, code: codeFor(url, email, 'register') }, headers);
+}
 const login = (url, body, headers) => postJson(url, '/api/auth/login', body, headers);
 const me = (url, cookie) => request(url, '/api/auth/me', { headers: cookie ? { Cookie: cookie } : {} });
 
 describe('POST /api/auth/register', () => {
   it('creates an account, returns the public user and sets an HTTP-only cookie', () =>
     withServer(makeTestApp().app, async (url) => {
-      const res = await register(url);
+      const res = await registerAccount(url);
       assert.equal(res.status, 201);
       assert.equal(res.json.user.email, 'asha@example.com');
       assert.equal(res.json.user.name, 'Asha Rao');
@@ -37,7 +46,7 @@ describe('POST /api/auth/register', () => {
 
   it('never returns the password or its hash', () =>
     withServer(makeTestApp().app, async (url) => {
-      const res = await register(url);
+      const res = await registerAccount(url);
       assert.doesNotMatch(res.text, /password/i);
       assert.doesNotMatch(res.text, /\$2[aby]\$/);
     }));
@@ -45,7 +54,7 @@ describe('POST /api/auth/register', () => {
   it('stores only a bcrypt hash, never the plain-text password', async () => {
     const { app, userRepository } = makeTestApp();
     await withServer(app, async (url) => {
-      await register(url);
+      await registerAccount(url);
     });
     const stored = [...userRepository.users.values()][0];
     assert.notEqual(stored.passwordHash, validUser.password);
@@ -56,7 +65,7 @@ describe('POST /api/auth/register', () => {
 
   it('signs a JWT whose subject is the new user id', () =>
     withServer(makeTestApp().app, async (url) => {
-      const res = await register(url);
+      const res = await registerAccount(url);
       const token = cookieFrom(res, 'nl_token').split('=')[1];
       const payload = jwt.verify(token, TEST_JWT_SECRET, { algorithms: ['HS256'] });
       assert.equal(payload.sub, res.json.user.id);
@@ -65,14 +74,14 @@ describe('POST /api/auth/register', () => {
 
   it('marks the cookie Secure when configured to', () =>
     withServer(makeTestApp({ cookie: { secure: true, sameSite: 'none' } }).app, async (url) => {
-      const header = setCookieHeader(await register(url), 'nl_token');
+      const header = setCookieHeader(await registerAccount(url), 'nl_token');
       assert.match(header, /; Secure/i);
       assert.match(header, /SameSite=None/i);
     }));
 
   it('rejects a duplicate email, ignoring letter case', () =>
     withServer(makeTestApp().app, async (url) => {
-      assert.equal((await register(url)).status, 201);
+      assert.equal((await registerAccount(url)).status, 201);
       const again = await register(url, { ...validUser, name: 'Someone Else', email: 'ASHA@Example.COM' });
       assert.equal(again.status, 409);
       assert.equal(again.json.error.code, 'EMAIL_TAKEN');
@@ -87,9 +96,12 @@ describe('POST /api/auth/register', () => {
       throw Object.assign(new Error('E11000'), { code: 11000 });
     };
     await withServer(app, async (url) => {
-      const res = await register(url);
+      // Step 1 passes (nobody has the email yet); at step 2 the unique index rejects the create.
+      assert.equal((await register(url)).status, 202);
+      const res = await postJson(url, '/api/auth/register/verify', { email: validUser.email, code: codeFor(url, validUser.email, 'register') });
       assert.equal(res.status, 409);
       assert.equal(res.json.error.code, 'EMAIL_TAKEN');
+      assert.equal(setCookieHeader(res, 'nl_token'), undefined);
     });
   });
 
@@ -105,7 +117,7 @@ describe('POST /api/auth/register', () => {
 describe('POST /api/auth/login', () => {
   it('logs in with correct credentials and sets the cookie', () =>
     withServer(makeTestApp().app, async (url) => {
-      await register(url);
+      await registerAccount(url);
       const res = await login(url, { email: 'ASHA@example.com', password: validUser.password });
       assert.equal(res.status, 200);
       assert.equal(res.json.user.email, 'asha@example.com');
@@ -114,7 +126,7 @@ describe('POST /api/auth/login', () => {
 
   it('rejects a wrong password and an unknown email with the same generic error', () =>
     withServer(makeTestApp().app, async (url) => {
-      await register(url);
+      await registerAccount(url);
       const wrongPassword = await login(url, { email: validUser.email, password: 'WrongPass123' });
       const unknownEmail = await login(url, { email: 'nobody@example.com', password: validUser.password });
       for (const res of [wrongPassword, unknownEmail]) {
@@ -136,7 +148,7 @@ describe('POST /api/auth/login', () => {
 describe('GET /api/auth/me (protected route)', () => {
   it('returns the current user for a valid cookie', () =>
     withServer(makeTestApp().app, async (url) => {
-      const signUp = await register(url);
+      const signUp = await registerAccount(url);
       const res = await me(url, cookieFrom(signUp, 'nl_token'));
       assert.equal(res.status, 200);
       assert.equal(res.json.user.email, validUser.email);
@@ -152,7 +164,7 @@ describe('GET /api/auth/me (protected route)', () => {
 
   it('rejects a tampered token, a token signed with another secret, and an expired token', () =>
     withServer(makeTestApp().app, async (url) => {
-      const signUp = await register(url);
+      const signUp = await registerAccount(url);
       const good = cookieFrom(signUp, 'nl_token');
       const userId = signUp.json.user.id;
 
@@ -170,7 +182,7 @@ describe('GET /api/auth/me (protected route)', () => {
   it('rejects a valid token whose user no longer exists', async () => {
     const { app, userRepository } = makeTestApp();
     await withServer(app, async (url) => {
-      const signUp = await register(url);
+      const signUp = await registerAccount(url);
       userRepository.users.clear();
       assert.equal((await me(url, cookieFrom(signUp, 'nl_token'))).status, 401);
     });
@@ -180,7 +192,7 @@ describe('GET /api/auth/me (protected route)', () => {
 describe('POST /api/auth/logout', () => {
   it('expires the auth cookie, after which /me is unauthenticated', () =>
     withServer(makeTestApp().app, async (url) => {
-      const signUp = await register(url);
+      const signUp = await registerAccount(url);
       const cookie = cookieFrom(signUp, 'nl_token');
       assert.equal((await me(url, cookie)).status, 200);
 
@@ -209,7 +221,7 @@ describe('request protections', () => {
       assert.equal(evil.json.error.code, 'FORBIDDEN_ORIGIN');
 
       const ok = await register(url, validUser, { Origin: TEST_ORIGIN });
-      assert.equal(ok.status, 201);
+      assert.equal(ok.status, 202); // registration has started: a code was emailed
       assert.equal(ok.headers['access-control-allow-credentials'], 'true');
       assert.equal(ok.headers['access-control-allow-origin'], TEST_ORIGIN);
     }));

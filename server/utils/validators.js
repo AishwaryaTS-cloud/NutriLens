@@ -51,6 +51,39 @@ export function validateLogin(input) {
   return result(errors, { email, password });
 }
 
+/** Just an email address (passwordless login request, resend). */
+export function validateEmailOnly(input) {
+  const body = input !== null && typeof input === 'object' ? input : {};
+  const email = cleanText(body.email).toLowerCase();
+  const errors = {};
+  const emailProblem = emailError(email);
+  if (emailProblem) errors.email = emailProblem;
+  return result(errors, { email });
+}
+
+/** An email address plus the six-digit code. A wrong-shaped code is rejected before it counts as an attempt. */
+export function validateOtpSubmission(input) {
+  const body = input !== null && typeof input === 'object' ? input : {};
+  const email = cleanText(body.email).toLowerCase();
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
+  const errors = {};
+  const emailProblem = emailError(email);
+  if (emailProblem) errors.email = emailProblem;
+  if (!/^\d{6}$/.test(code)) errors.code = 'Enter the 6-digit code.';
+  return result(errors, { email, code });
+}
+
+/** The Google ID token (a JWT) the browser received from Google Identity Services. */
+export function validateGoogleCredential(input) {
+  const body = input !== null && typeof input === 'object' ? input : {};
+  const credential = typeof body.credential === 'string' ? body.credential.trim() : '';
+  const errors = {};
+  if (!credential || credential.length > 4096 || !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(credential)) {
+    errors.credential = 'Google sign-in did not return a valid response.';
+  }
+  return result(errors, { credential });
+}
+
 /** Display-name update (Phase 2): the same rule as registration. */
 export function validateName(input) {
   const body = input !== null && typeof input === 'object' ? input : {};

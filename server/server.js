@@ -10,7 +10,12 @@ import { createGeminiClient } from '../ai/gemini/geminiClient.js';
 import { extractLabel } from '../ai/gemini/labelExtractor.js';
 import { Profile } from './models/Profile.js';
 import { Scan } from './models/Scan.js';
+import { AuthNonce } from './models/AuthNonce.js';
+import { OtpChallenge } from './models/OtpChallenge.js';
 import { User } from './models/User.js';
+import { createEmailService, createTransport } from './services/emailService.js';
+import { createGoogleVerifier } from './services/googleVerifier.js';
+import { createNonceRepository, createOtpRepository } from './services/otpRepository.js';
 import { createProfileRepository } from './services/profileRepository.js';
 import { createProfileService } from './services/profileService.js';
 import { createScanRepository } from './services/scanRepository.js';
@@ -41,6 +46,15 @@ const version = readVersion();
 const gemini = createGeminiClient({ apiKey: env.geminiApiKey, model: env.geminiModel, timeoutMs: env.geminiTimeoutMs, dailyLimit: env.geminiDailyLimit, logger });
 if (!gemini.isConfigured) logger.warn('GEMINI_API_KEY is not set: label reading is disabled and explanations use rules only');
 
+// Email codes need EMAIL_PROVIDER (+ credentials) and OTP_SECRET; Google sign-in needs GOOGLE_CLIENT_ID.
+// Each is optional: whatever is not configured answers 503 and everything else keeps working.
+const emailService = env.email
+  ? createEmailService({ transport: createTransport(env.email), from: env.email.from, fromName: env.email.fromName, logger })
+  : undefined;
+if (!emailService) logger.warn('EMAIL_PROVIDER is not set: email codes (sign-up verification and email login) are switched off.');
+const googleVerifier = env.googleClientId ? createGoogleVerifier({ clientId: env.googleClientId, logger }) : undefined;
+if (!googleVerifier) logger.warn('GOOGLE_CLIENT_ID is not set: Google sign-in is switched off.');
+
 const userRepository = createUserRepository();
 const profileRepository = createProfileRepository();
 const scanService = createScanService({
@@ -61,6 +75,12 @@ const app = createApp({
   profileRepository,
   scanService,
   uploadLimits: { maxBytes: env.maxUploadBytes },
+  emailService,
+  otpRepository: createOtpRepository(),
+  otpSecret: env.otpSecret,
+  googleVerifier,
+  nonceRepository: createNonceRepository(),
+  trustProxy: env.trustProxy,
   auth: {
     jwtSecret: env.jwtSecret,
     jwtExpiresInSeconds: env.jwtExpiresInSeconds,
@@ -87,6 +107,8 @@ try {
   await User.init();
   await Profile.init(); // one profile per user, enforced by a unique index
   await Scan.init();
+  await OtpChallenge.init(); // unique (email, purpose) and the TTL cleanup index
+  await AuthNonce.init();
 } catch (err) {
   const detail = { name: err.name, message: err.message };
   if (env.nodeEnv === 'production') {

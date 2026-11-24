@@ -25,6 +25,11 @@ export function validateLoginForm({ email = '', password = '' }) {
   });
 }
 
+/** Just an email address (the "email me a code" form). */
+export function validateEmailForm({ email = '' }) {
+  return compact({ email: emailError(email) });
+}
+
 export function validateRegisterForm({ name = '', email = '', password = '', confirmPassword = '' }) {
   const cleanName = name.trim().replace(/\s+/g, ' ');
   return compact({
