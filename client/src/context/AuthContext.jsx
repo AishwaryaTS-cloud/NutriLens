@@ -33,11 +33,26 @@ export function AuthProvider({ children }) {
     return user;
   }, []);
 
-  const register = useCallback(async (details) => {
-    const user = await authApi.register(details);
+  // Every sign-in method ends the same way: remember the user (the JWT is in the HTTP-only cookie).
+  const establish = useCallback((user) => {
     setState({ status: 'authenticated', user });
     return user;
   }, []);
+
+  // Registration: step 1 only emails a code (nobody is signed in yet); step 2 signs in.
+  const completeRegistration = useCallback(async (details) => establish(await authApi.verifyRegistration(details)), [establish]);
+  const loginWithCode = useCallback(async (details) => establish(await authApi.verifyLoginCode(details)), [establish]);
+  const completeGoogleLink = useCallback(async (details) => establish(await authApi.verifyGoogleLink(details)), [establish]);
+
+  /** Resolves { user, isNewUser } when signed in, or { verification } when an emailed code is still needed. */
+  const loginWithGoogle = useCallback(
+    async (credential) => {
+      const result = await authApi.signInWithGoogle(credential);
+      if (result.user) establish(result.user);
+      return result;
+    },
+    [establish],
+  );
 
   // If the request fails the error propagates and the user stays signed in, because the cookie
   // may still be valid.
@@ -52,8 +67,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ ...state, login, register, logout, updateUser }),
-    [state, login, register, logout, updateUser],
+    () => ({ ...state, login, completeRegistration, loginWithCode, loginWithGoogle, completeGoogleLink, logout, updateUser }),
+    [state, login, completeRegistration, loginWithCode, loginWithGoogle, completeGoogleLink, logout, updateUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -32,3 +32,18 @@ describe('validateLoginForm', () => {
     assert.deepEqual(Object.keys(validateLoginForm({})).sort(), ['email', 'password']);
   });
 });
+
+import { validateEmailForm } from './authValidation.js';
+
+describe('validateEmailForm (the "email me a code" form)', () => {
+  it('accepts a valid address, with surrounding spaces', () => {
+    assert.deepEqual(validateEmailForm({ email: ' person@gmail.com ' }), {});
+    assert.deepEqual(validateEmailForm({ email: 'a@outlook.com' }), {});
+  });
+  it('rejects empty and malformed addresses with a clear message', () => {
+    assert.equal(validateEmailForm({ email: '' }).email, 'Enter your email address.');
+    assert.equal(validateEmailForm({}).email, 'Enter your email address.');
+    assert.equal(validateEmailForm({ email: 'not-an-email' }).email, 'Enter a valid email address.');
+    assert.equal(validateEmailForm({ email: `${'a'.repeat(250)}@x.co` }).email, 'Enter a valid email address.');
+  });
+});

@@ -1,13 +1,18 @@
 import http from 'node:http';
 
 /** Starts the app on a random local port, runs `fn(baseUrl)`, then always closes the server. */
+const mailers = new Map(); // base URL -> the fake mailer of the app served there (see signUp)
+
 export async function withServer(app, fn) {
   const server = await new Promise((resolve) => {
     const instance = app.listen(0, '127.0.0.1', () => resolve(instance));
   });
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  if (app.locals.testMailer) mailers.set(baseUrl, app.locals.testMailer);
   try {
-    return await fn(`http://127.0.0.1:${server.address().port}`);
+    return await fn(baseUrl);
   } finally {
+    mailers.delete(baseUrl);
     await new Promise((resolve) => server.close(resolve));
   }
 }
@@ -36,27 +41,36 @@ export function request(baseUrl, path, { method = 'GET', headers = {}, body } = 
 }
 
 // ---------- Phase 1: authentication test helpers ----------
-import { randomUUID } from 'node:crypto';
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { createApp } from '../app.js';
 import { explainAnalysis } from '../../ai/gemini/explainer.js';
 import { EXPLANATION_SCHEMA } from '../../ai/gemini/explainer.js';
 import { GeminiError } from '../../ai/gemini/geminiClient.js';
 import { extractLabel } from '../../ai/gemini/labelExtractor.js';
+import { createGoogleVerifier } from '../services/googleVerifier.js';
 import { createProfileService } from '../services/profileService.js';
+import { HttpError } from '../utils/httpError.js';
 import { ImageError } from '../utils/imagePrep.js';
 import { createScanService } from '../services/scanService.js';
 import { createLogger } from '../utils/logger.js';
 
 export const TEST_ORIGIN = 'http://localhost:5173';
 export const TEST_JWT_SECRET = 'test-secret-that-is-at-least-32-characters-long';
+export const TEST_OTP_SECRET = 'test-otp-secret-that-is-at-least-32-characters';
 
 /** In-memory stand-in for the Mongo-backed repository, with the same unique-email behaviour. */
 export function createMemoryUserRepository() {
   const users = new Map();
+  const duplicate = () => Object.assign(new Error('E11000 duplicate key error'), { code: 11000 });
   return {
     users,
     async findByEmail(email) {
       return [...users.values()].find((user) => user.email === email) ?? null;
+    },
+    async findByGoogleId(googleId) {
+      return [...users.values()].find((user) => user.googleId === googleId) ?? null;
     },
     async findById(id) {
       return users.get(String(id)) ?? null;
@@ -67,17 +81,144 @@ export function createMemoryUserRepository() {
       user.name = name;
       return user;
     },
-    async create({ name, email, passwordHash }) {
-      if ([...users.values()].some((user) => user.email === email)) {
-        throw Object.assign(new Error('E11000 duplicate key error'), { code: 11000 });
-      }
-      const user = { id: randomUUID(), name, email, passwordHash, createdAt: new Date() };
+    async create({ name, email, passwordHash, googleId, emailVerified = false, emailVerifiedAt, authProviders = [] }) {
+      if ([...users.values()].some((user) => user.email === email)) throw duplicate();
+      if (googleId && [...users.values()].some((user) => user.googleId === googleId)) throw duplicate();
+      // Mirrors the Mongoose defaults: an account made "the old way" has no googleId and is not verified.
+      const user = { id: randomUUID(), name, email, passwordHash, googleId, emailVerified, emailVerifiedAt, authProviders: [...authProviders], createdAt: new Date() };
       users.set(user.id, user);
+      return user;
+    },
+    async linkGoogle(id, googleId) {
+      const user = users.get(String(id));
+      if (!user) return null;
+      if ([...users.values()].some((other) => other.id !== user.id && other.googleId === googleId)) throw duplicate();
+      user.googleId = googleId;
+      user.emailVerified = true;
+      if (!user.authProviders.includes('google')) user.authProviders.push('google');
+      return user;
+    },
+    async markEmailVerified(id, provider) {
+      const user = users.get(String(id));
+      if (!user) return null;
+      user.emailVerified = true;
+      user.emailVerifiedAt ??= new Date();
+      if (!user.authProviders.includes(provider)) user.authProviders.push(provider);
       return user;
     },
   };
 }
 
+/** A movable clock, so tests can cross the 5-minute expiry and the 60-second cooldown instantly. */
+export function createClock(start = Date.UTC(2026, 0, 1)) {
+  let current = start;
+  const now = () => current;
+  now.advance = (ms) => { current += ms; };
+  return now;
+}
+
+/**
+ * In-memory email-code store with the same atomic behaviour as the MongoDB version (JavaScript runs
+ * one step at a time, so each method below is atomic just like one findOneAndUpdate).
+ */
+export function createMemoryOtpRepository() {
+  const challenges = new Map();
+  const key = (email, purpose) => `${purpose}|${email}`;
+  return {
+    challenges,
+    async find(email, purpose) {
+      const doc = challenges.get(key(email, purpose));
+      return doc ? structuredClone(doc) : null;
+    },
+    async upsert({ email, purpose, codeHash, now, expiresAt, pending, link }) {
+      const existing = challenges.get(key(email, purpose));
+      const doc = { ...(existing ?? { _id: randomUUID(), email, purpose }), codeHash, attempts: 0, lastSentAt: now, expiresAt, ...(pending ? { pending } : {}), ...(link ? { link } : {}) };
+      challenges.set(key(email, purpose), doc);
+      return structuredClone(doc);
+    },
+    async incrementAttempts({ email, purpose, now, max }) {
+      const doc = challenges.get(key(email, purpose));
+      if (!doc || !(doc.expiresAt > now) || !(doc.attempts < max)) return null;
+      doc.attempts += 1;
+      return structuredClone(doc);
+    },
+    async consume({ id, codeHash }) {
+      for (const [k, doc] of challenges) {
+        if (doc._id === id && doc.codeHash === codeHash) {
+          challenges.delete(k);
+          return structuredClone(doc);
+        }
+      }
+      return null;
+    },
+    async remove(email, purpose) {
+      challenges.delete(key(email, purpose));
+    },
+  };
+}
+
+export function createMemoryNonceRepository() {
+  const nonces = new Map();
+  return {
+    nonces,
+    async create({ nonceHash, expiresAt }) {
+      nonces.set(nonceHash, { nonceHash, expiresAt });
+    },
+    async consume({ nonceHash, now }) {
+      const doc = nonces.get(nonceHash);
+      if (!doc || !(doc.expiresAt > now)) return null;
+      nonces.delete(nonceHash);
+      return doc;
+    },
+  };
+}
+
+/** A fake email service: records every message (so tests can read the code) and can be made to fail. */
+export function createFakeMailer() {
+  const outbox = [];
+  const state = { failing: false };
+  return {
+    outbox,
+    setFailing(value = true) { state.failing = value; },
+    emailService: {
+      provider: 'fake',
+      async sendOtp({ to, code, purpose }) {
+        if (state.failing) throw new HttpError(503, 'EMAIL_SEND_FAILED', "We couldn't send the email. Please try again in a moment.");
+        outbox.push({ to, code, purpose });
+      },
+    },
+    /** The newest code sent to this address (optionally for one purpose). */
+    latestCode(to, purpose) {
+      return [...outbox].reverse().find((m) => m.to === to && (!purpose || m.purpose === purpose))?.code;
+    },
+    sentTo(to) {
+      return outbox.filter((m) => m.to === to).length;
+    },
+  };
+}
+
+export const TEST_GOOGLE_CLIENT_ID = 'test-client-123.apps.googleusercontent.com';
+
+/**
+ * Real Google token verification, with keys we control: tokens are signed with a local RSA key and
+ * the REAL google-auth-library checks signature, audience, issuer and expiry. Only the download of
+ * Google's public keys is replaced.
+ */
+export function createGoogleTestKit(clientId = TEST_GOOGLE_CLIENT_ID) {
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const attacker = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pem = publicKey.export({ type: 'spki', format: 'pem' });
+  const client = new OAuth2Client(clientId);
+  client.getFederatedSignonCertsAsync = async () => ({ certs: { 'test-kid': pem }, format: 'PEM' });
+  const verifier = createGoogleVerifier({ clientId, client });
+
+  /** A Google-style ID token. Pass claims to override; `signWith` selects another key (a forgery). */
+  function sign(claims = {}, { signWith = privateKey } = {}) {
+    const payload = { iss: 'https://accounts.google.com', aud: clientId, sub: 'google-sub-1', email: 'asha@example.com', email_verified: true, name: 'Asha Rao', ...claims };
+    return jwt.sign(payload, signWith, { algorithm: 'RS256', keyid: 'test-kid', ...(payload.exp ? {} : { expiresIn: 3600 }) });
+  }
+  return { clientId, verifier, sign, forgeryKey: attacker.privateKey };
+}
 /** In-memory stand-in for the Mongo-backed profile repository: one profile per user id. */
 export function createMemoryProfileRepository() {
   const profiles = new Map();
@@ -281,7 +422,24 @@ export function makeTestApp({
   logger = createLogger({ silent: true }),
   cookie = {},
   authRateLimit = { windowMs: 60_000, max: 1000 },
+  otpRateLimits = {},
+  mailer = createFakeMailer(),
+  clock = createClock(),
+  otpRepository = createMemoryOtpRepository(),
+  nonceRepository = createMemoryNonceRepository(),
+  google = createGoogleTestKit(),
+  trustProxy = false,
+  emailEnabled = true,
 } = {}) {
+  // Loose limits by default so ordinary tests never trip them; the rate-limit tests set real ones.
+  const looseOtpLimits = {
+    sendIp: { windowMs: 60_000, max: 1000 },
+    sendEmail: { windowMs: 60_000, max: 1000 },
+    sendCooldown: { windowMs: 60_000, max: 1000 },
+    verifyIp: { windowMs: 60_000, max: 1000 },
+    verifyEmail: { windowMs: 60_000, max: 1000 },
+    ...otpRateLimits,
+  };
   const scan = createTestScanService({ userRepository, profileRepository, ...scanOptions });
   const app = createApp({
     clientOrigin: TEST_ORIGIN,
@@ -297,6 +455,14 @@ export function makeTestApp({
     analyseRateLimit,
     maxInFlightUploads,
     authRateLimit,
+    otpRateLimits: looseOtpLimits,
+    emailService: emailEnabled ? mailer.emailService : undefined,
+    otpRepository,
+    otpSecret: TEST_OTP_SECRET,
+    googleVerifier: google ? google.verifier : undefined,
+    nonceRepository,
+    trustProxy,
+    now: clock,
     auth: {
       jwtSecret: TEST_JWT_SECRET,
       jwtExpiresInSeconds: 3600,
@@ -304,7 +470,8 @@ export function makeTestApp({
       cookie: { name: 'nl_token', secure: false, sameSite: 'lax', maxAgeMs: 3_600_000, ...cookie },
     },
   });
-  return { app, userRepository, profileRepository, scan };
+  app.locals.testMailer = mailer;
+  return { app, userRepository, profileRepository, scan, mailer, clock, otpRepository, nonceRepository, google };
 }
 
 export function postJson(url, path, body, headers = {}) {
@@ -335,10 +502,22 @@ export function sendJson(method, url, path, body, headers = {}) {
   });
 }
 
-/** Registers a user and returns { cookie, user } for authenticated requests. */
+/**
+ * Registers a user through the REAL two-step email-code flow (start, read the code from the fake
+ * mailbox, verify) and returns { cookie, user } for authenticated requests.
+ */
 export async function signUp(url, user = validUser) {
-  const res = await postJson(url, '/api/auth/register', user);
+  const start = await postJson(url, '/api/auth/register', user);
+  if (start.status !== 202) throw new Error(`signUp: registration did not start (${start.status}: ${start.text})`);
+  const code = mailers.get(url)?.latestCode(user.email.trim().toLowerCase(), 'register');
+  const res = await postJson(url, '/api/auth/register/verify', { email: user.email, code });
+  if (res.status !== 201) throw new Error(`signUp: verification failed (${res.status}: ${res.text})`);
   return { cookie: cookieFrom(res, 'nl_token'), user: res.json.user };
+}
+
+/** The code most recently emailed to an address by the app served at `url`. */
+export function codeFor(url, email, purpose) {
+  return mailers.get(url)?.latestCode(email, purpose);
 }
 
 export const validPreferences = {
