@@ -73,3 +73,45 @@
 
 /* The landing page ends with the CTA band, so the footer sits flush against it. */
 .nl-main:has(.cta) + .nl-footer { margin-top: 0; }
+
+/* ---------- "How NutriLens will work" + animated label scan ---------- */
+.plan { display: grid; gap: var(--space-7); align-items: center; }
+.plan__title { font-size: var(--text-3xl); }
+.plan__list { display: grid; gap: var(--space-5); margin-top: var(--space-6); }
+.plan__item { display: grid; grid-template-columns: 2.5rem 1fr; gap: var(--space-4); align-items: start; color: var(--ink-soft); }
+.plan__number { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font-family: var(--font-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+.plan__item-title { margin-bottom: var(--space-1); color: var(--ink); font-size: var(--text-lg); }
+
+/* Decorative label: placeholder rows only, no numbers and no results. */
+.scan-preview { position: relative; overflow: hidden; width: 100%; max-width: 28rem; justify-self: center; padding: var(--space-4); border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-2); }
+.scan-preview__head { height: var(--rule-heavy); margin-bottom: var(--space-3); background: var(--ink); }
+.scan-preview__title { width: 48%; height: 22px; border-radius: var(--radius-sm); background: var(--ink); }
+.scan-preview__rule { height: var(--rule-medium); margin-block: var(--space-3); background: var(--ink); }
+.scan-preview__row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding-block: var(--space-3); border-bottom: var(--rule-thin) solid var(--line); }
+.scan-preview__row:last-of-type { border-bottom: 0; }
+.scan-preview__row span { height: 10px; border-radius: 999px; background: var(--surface-muted); }
+.scan-preview__row .scan-preview__value { width: 2.5rem; }
+
+/*
+ * The beam element is exactly as tall as the label, and its bright line is the element's bottom edge.
+ * Sliding it from -100% to 0 therefore sweeps the line across the whole label at any size, with no
+ * hard-coded distance. Only transform and opacity animate, so it stays on the compositor.
+ */
+.scan-preview__beam { position: absolute; inset: 0; pointer-events: none; animation: nl-scan 3.4s linear infinite; }
+.scan-preview__beam::after { content: ''; position: absolute; inset: auto 0 0 0; height: 3px; background: var(--leaf); box-shadow: 0 0 18px 4px color-mix(in srgb, var(--leaf) 45%, transparent); }
+
+@keyframes nl-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+
+/* Reduced motion: no sweep, just a still scan line resting near the bottom of the label. */
+@media (prefers-reduced-motion: reduce) {
+  .scan-preview__beam { animation: none; transform: translateY(-12%); opacity: 1; }
+}
+
+@media (min-width: 60rem) {
+  .plan { grid-template-columns: 1.1fr 0.9fr; gap: var(--space-8); }
+}

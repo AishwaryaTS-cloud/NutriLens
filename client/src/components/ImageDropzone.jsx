@@ -5,7 +5,7 @@ import Icon from './Icon.jsx';
  * Choose or drop one image. The real file input stays in the page (visually hidden), so it works
  * with the keyboard and screen readers; the label is the visible button.
  */
-export default function ImageDropzone({ onFile, maxUploadMb, allowedTypes, disabled = false }) {
+export default function ImageDropzone({ onFile, onCapture, maxUploadMb, allowedTypes, disabled = false }) {
   const inputId = useId();
   const [dragging, setDragging] = useState(false);
 
@@ -43,9 +43,16 @@ export default function ImageDropzone({ onFile, maxUploadMb, allowedTypes, disab
           event.target.value = ''; // choosing the same file again should still register
         }}
       />
-      <label htmlFor={inputId} className="nl-btn nl-btn--primary dropzone__button">
-        Choose an image
-      </label>
+      <div className="dropzone__actions">
+        <label htmlFor={inputId} className="nl-btn nl-btn--primary dropzone__button">
+          Choose an image
+        </label>
+        {onCapture && (
+          <button type="button" className="nl-btn nl-btn--outline dropzone__button" onClick={onCapture} disabled={disabled}>
+            <Icon name="camera" size={18} /> Capture Photo
+          </button>
+        )}
+      </div>
 
       <ul className="dropzone__tips">
         <li>Good light, with no glare on glossy packaging</li>

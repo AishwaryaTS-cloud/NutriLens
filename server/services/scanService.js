@@ -12,15 +12,15 @@ import { toPublicScan, toScanSummary } from '../utils/publicScan.js';
 
 const MANUAL = ' You can still enter the label values by hand.';
 const GEMINI_HTTP = {
-  GEMINI_NOT_CONFIGURED: [503, 'GEMINI_NOT_CONFIGURED', `Reading labels with Gemini is not set up on this server.${MANUAL}`],
-  GEMINI_QUOTA: [429, 'GEMINI_QUOTA_EXCEEDED', `The free Gemini quota is used up for now. Try again later.${MANUAL}`],
-  GEMINI_LIMIT: [429, 'GEMINI_DAILY_LIMIT', `This app's daily Gemini limit was reached. Try again tomorrow.${MANUAL}`],
-  GEMINI_AUTH: [503, 'GEMINI_UNAVAILABLE', `Gemini is not available right now.${MANUAL}`],
-  GEMINI_MODEL: [503, 'GEMINI_UNAVAILABLE', `Gemini is not available right now.${MANUAL}`],
-  GEMINI_UNAVAILABLE: [503, 'GEMINI_UNAVAILABLE', `Gemini is not available right now. Please try again shortly.${MANUAL}`],
-  GEMINI_TIMEOUT: [504, 'GEMINI_TIMEOUT', `Gemini took too long to read the image. Please try again.${MANUAL}`],
-  GEMINI_BLOCKED: [422, 'GEMINI_BLOCKED', `Gemini could not process this image. Try a different photo.${MANUAL}`],
-  GEMINI_BAD_RESPONSE: [502, 'GEMINI_BAD_RESPONSE', `Gemini sent an answer that could not be used. Please try again.${MANUAL}`],
+  GEMINI_NOT_CONFIGURED: [503, 'GEMINI_NOT_CONFIGURED', `Reading labels is not set up on this server.${MANUAL}`],
+  GEMINI_QUOTA: [429, 'GEMINI_QUOTA_EXCEEDED', `The free label-reading allowance is used up for now. Try again later.${MANUAL}`],
+  GEMINI_LIMIT: [429, 'GEMINI_DAILY_LIMIT', `This app's daily label-reading limit was reached. Try again tomorrow.${MANUAL}`],
+  GEMINI_AUTH: [503, 'GEMINI_UNAVAILABLE', `Label reading is not available right now.${MANUAL}`],
+  GEMINI_MODEL: [503, 'GEMINI_UNAVAILABLE', `Label reading is not available right now.${MANUAL}`],
+  GEMINI_UNAVAILABLE: [503, 'GEMINI_UNAVAILABLE', `Label reading is not available right now. Please try again shortly.${MANUAL}`],
+  GEMINI_TIMEOUT: [504, 'GEMINI_TIMEOUT', `Reading the label took too long. Please try again.${MANUAL}`],
+  GEMINI_BLOCKED: [422, 'GEMINI_BLOCKED', `NutriLens could not process this image. Try a different photo.${MANUAL}`],
+  GEMINI_BAD_RESPONSE: [502, 'GEMINI_BAD_RESPONSE', `The label reading could not be used. Please try again.${MANUAL}`],
 };
 
 /** Maps image and Gemini failures to API errors. Messages are fixed text: nothing user-supplied is echoed. */

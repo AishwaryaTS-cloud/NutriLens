@@ -18,7 +18,7 @@ function ExtractionNotes({ extraction }) {
     return (
       <p className="nl-alert" role="alert">
         <Icon name="alert" size={20} />
-        <span>Gemini could not find a food label or any readable values in this image. Try a clearer photo, or fill the fields in by hand.</span>
+        <span>NutriLens could not find a food label or any readable values in this image. Try a clearer photo, or fill the fields in by hand.</span>
       </p>
     );
   }
@@ -26,7 +26,7 @@ function ExtractionNotes({ extraction }) {
     <div className={`extract-note extract-note--${status}`} role="status">
       <p className="extract-note__title">
         <Icon name={status === 'ok' ? 'check' : 'alert'} size={20} />
-        {status === 'ok' ? 'Gemini read the label. Please check every value against the package.' : 'Gemini read part of the label. Please check and complete the fields below.'}
+        {status === 'ok' ? 'NutriLens read the label. Please check every value against the package.' : 'NutriLens read part of the label. Please check and complete the fields below.'}
       </p>
       <ul>
         {readability?.imageQuality && <li>Image quality: {readability.imageQuality}.</li>}

@@ -6,13 +6,13 @@ const TIER_TEXT = { confirmed: 'Confirmed', precautionary: 'May contain', possib
 const STATUS_TEXT = { complete: 'Complete', incomplete: 'Incomplete', unavailable: 'Unavailable' };
 const COMPONENT_NAMES = { preference: 'Personal Preference', quality: 'Nutrition Quality', ingredient: 'Ingredients' };
 const FALLBACK_TEXT = {
-  GEMINI_NOT_CONFIGURED: 'Gemini is not set up on this server.',
-  GEMINI_QUOTA: 'The free Gemini quota is used up for now.',
-  GEMINI_LIMIT: 'The daily Gemini limit for this app was reached.',
-  GEMINI_UNAVAILABLE: 'Gemini was not available.',
-  GEMINI_TIMEOUT: 'Gemini took too long.',
-  GEMINI_BAD_RESPONSE: 'Gemini’s answer could not be used.',
-  UNVERIFIED_NUMBERS: 'Gemini’s answer contained numbers that were not verified, so it was not used.',
+  GEMINI_NOT_CONFIGURED: 'The detailed explanation is not set up on this server.',
+  GEMINI_QUOTA: 'The free allowance for detailed explanations is used up for now.',
+  GEMINI_LIMIT: 'The daily limit for detailed explanations was reached.',
+  GEMINI_UNAVAILABLE: 'The detailed explanation was not available.',
+  GEMINI_TIMEOUT: 'The detailed explanation took too long.',
+  GEMINI_BAD_RESPONSE: 'The detailed explanation could not be used.',
+  UNVERIFIED_NUMBERS: 'The detailed explanation contained numbers that were not verified, so it was not used.',
   INSUFFICIENT_DATA: 'There was too little data for a longer explanation.',
 };
 
@@ -60,7 +60,7 @@ function Breakdown({ match }) {
   return (
     <details className="more" aria-labelledby="breakdown-title">
       <summary id="breakdown-title">How the score was calculated</summary>
-      <p className="nl-field__hint">Score = Personal Preference × 0.50 + Nutrition Quality × 0.30 + Ingredients × 0.20, then allergen penalties. These numbers are calculated by NutriLens, never by AI.</p>
+      <p className="nl-field__hint">Score = Personal Preference × 0.50 + Nutrition Quality × 0.30 + Ingredients × 0.20, then allergen penalties. These numbers are calculated by NutriLens using fixed scoring rules.</p>
       <div className="table-wrap">
         <table className="result-table">
           <thead><tr><th scope="col">Part</th><th scope="col">Score</th><th scope="col">Weight</th><th scope="col">Points</th></tr></thead>
@@ -240,8 +240,8 @@ function Explanation({ explanation }) {
   return (
     <>
       <section className="result-card explain" aria-labelledby="explain-title">
-        <h2 id="explain-title" className="result-card__title">Explanation <span className={`badge ${source === 'gemini' ? 'badge--ai' : ''}`}>{source === 'gemini' ? 'Written by Gemini from the calculated results' : 'Basic explanation'}</span></h2>
-        {source !== 'gemini' && fallbackReason && <p className="nl-field__hint">{FALLBACK_TEXT[fallbackReason] ?? 'Gemini was not used.'} This text is built directly from the calculated results.</p>}
+        <h2 id="explain-title" className="result-card__title">Explanation <span className={`badge ${source === 'gemini' ? 'badge--ai' : ''}`}>{source === 'gemini' ? 'Explains your calculated results' : 'Basic explanation'}</span></h2>
+        {source !== 'gemini' && fallbackReason && <p className="nl-field__hint">{FALLBACK_TEXT[fallbackReason] ?? 'The detailed explanation was not used.'} This text is built directly from the calculated results.</p>}
         <p className="explain__lead">{e.overview}</p>
         <h3>Nutrition</h3>
         <p>{e.nutritionExplanation}</p>
