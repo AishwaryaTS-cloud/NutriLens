@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AnalysisView from '../components/AnalysisView.jsx';
+import CameraCapture from '../components/CameraCapture.jsx';
 import Icon from '../components/Icon.jsx';
 import ImageDropzone from '../components/ImageDropzone.jsx';
 import LabelReviewForm from '../components/LabelReviewForm.jsx';
@@ -18,7 +19,7 @@ function Progress({ state }) {
     <div className="scan-reading" role="status">
       <figure className="scan-reading__figure"><img src={state.previewUrl} alt="The label image being read" /></figure>
       <div>
-        <p className="scan-reading__title"><Icon name="loader" size={22} className="nl-spin" />{uploading ? 'Sending the image…' : 'Gemini is reading the label…'}</p>
+        <p className="scan-reading__title"><Icon name="loader" size={22} className="nl-spin" />{uploading ? 'Sending the image…' : 'Reading the label…'}</p>
         <div className="nl-progress" aria-hidden="true"><span style={{ width: `${uploading ? state.progress : 100}%` }} className={uploading ? '' : 'is-indeterminate'} /></div>
         <p className="nl-field__hint">This usually takes a few seconds. Please keep this page open.</p>
       </div>
@@ -29,6 +30,7 @@ function Progress({ state }) {
 export default function Scan() {
   const [state, dispatch] = useReducer(scanReducer, initialScanState);
   const [options, setOptions] = useState(FALLBACK_OPTIONS);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const abortRef = useRef(null);
   const headingRef = useRef(null);
   const replaceRef = useRef(null);
@@ -51,6 +53,12 @@ export default function Scan() {
     if (problem) dispatch({ type: 'REJECT_FILE', message: problem });
     else dispatch({ type: 'SELECT', file, previewUrl: URL.createObjectURL(file) });
   }, [options]);
+
+  // A captured photo is just another File: it takes the same validation and upload path as a chosen one.
+  const handleCaptured = useCallback((file) => {
+    setCameraOpen(false);
+    handleFile(file);
+  }, [handleFile]);
 
   async function read() {
     abortRef.current?.abort();
@@ -95,6 +103,7 @@ export default function Scan() {
 
   function startOver() {
     abortRef.current?.abort();
+    setCameraOpen(false);
     dispatch({ type: 'RESET' });
   }
 
@@ -107,7 +116,7 @@ export default function Scan() {
         <p className="nl-eyebrow">Scan a product</p>
         <h1 className="page__title" tabIndex={-1} ref={headingRef}>{phase === 'results' ? 'Your analysis' : phase === 'review' || phase === 'analysing' ? 'Check the label values' : 'Scan a food label'}</h1>
         {(phase === 'idle' || phase === 'selected') && (
-          <p className="page__lead">Add a photo of a packaged food label. Gemini reads it, then you check and correct what it found before anything is calculated. Your image is not saved.</p>
+          <p className="page__lead">Add a photo of a packaged food label. NutriLens reads it, then you check and correct what it found before anything is calculated. Your image is not saved.</p>
         )}
         <ol className="stepper" aria-label="Progress">
           {STEPS.map((name, i) => (
@@ -125,8 +134,12 @@ export default function Scan() {
 
       {phase === 'idle' && (
         <>
-          <p className="privacy-note"><Icon name="shield" size={18} /> The image you choose is sent to Google’s Gemini API through this server so it can read the label. Do not upload photos of people or personal documents.</p>
-          <ImageDropzone onFile={handleFile} maxUploadMb={options.maxUploadMb ?? FALLBACK_OPTIONS.maxUploadMb} allowedTypes={options.allowedTypes} />
+          <p className="privacy-note"><Icon name="shield" size={18} /> The image you choose or capture is sent securely through this server to an external reading service so NutriLens can read the label. Do not upload photos of people or personal documents.</p>
+          {cameraOpen ? (
+            <CameraCapture maxBytes={options.maxUploadBytes ?? FALLBACK_OPTIONS.maxUploadBytes} onUse={handleCaptured} onCancel={() => setCameraOpen(false)} />
+          ) : (
+            <ImageDropzone onFile={handleFile} onCapture={() => setCameraOpen(true)} maxUploadMb={options.maxUploadMb ?? FALLBACK_OPTIONS.maxUploadMb} allowedTypes={options.allowedTypes} />
+          )}
           <p className="scan__manual">No photo? <button type="button" className="link-button" onClick={() => dispatch({ type: 'MANUAL' })}>Enter the label values by hand</button></p>
         </>
       )}
@@ -141,7 +154,7 @@ export default function Scan() {
             <p className="scan-selected__name">{phase === 'failed' ? 'The label could not be read' : 'Image ready'}</p>
             <p className="nl-field__hint">{phase === 'failed' ? 'You can try again, replace the photo, or type the values in yourself.' : 'Check that the label is sharp and fully in view. The image is sent only when you press the button.'}</p>
             <div className="review__actions">
-              <button type="button" className="nl-btn nl-btn--primary" onClick={read}>{phase === 'failed' ? 'Try again' : 'Read label with Gemini'}</button>
+              <button type="button" className="nl-btn nl-btn--primary" onClick={read}>{phase === 'failed' ? 'Try again' : 'Read the label'}</button>
               {phase === 'failed' && <button type="button" className="nl-btn nl-btn--outline" onClick={() => dispatch({ type: 'MANUAL' })}>Enter values by hand</button>}
             </div>
             <div className="scan-selected__tools">

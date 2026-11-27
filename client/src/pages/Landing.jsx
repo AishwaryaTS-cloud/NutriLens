@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
+import ScanPreview from '../components/ScanPreview.jsx';
 
 const FEATURES = [
-  { icon: 'scan', title: 'Read any label from a photo', text: 'Snap or upload a packaged food label. Gemini Vision reads the nutrition table and ingredients for you.' },
+  { icon: 'scan', title: 'Read any label from a photo', text: 'Snap or upload a packaged food label. NutriLens reads the nutrition table and ingredients for you.' },
   { icon: 'edit', title: 'You stay in control', text: 'Check what was read and correct any value before anything is calculated.' },
   { icon: 'sliders', title: 'Scored for you', text: 'A Personal Match Score reflects your diet, nutrient priorities and goals, not a one-size-fits-all rating.' },
   { icon: 'shield', title: 'Allergen warnings first', text: 'Confirmed allergens and “may contain” notes are shown separately. A good score never hides them.' },
@@ -12,9 +13,16 @@ const FEATURES = [
 
 const STEPS = [
   { title: 'Scan the label', text: 'Upload a clear photo of the nutrition table and ingredient list.' },
-  { title: 'Review what was read', text: 'Gemini extracts the values. You check them and fix anything that looks off.' },
+  { title: 'Review what was read', text: 'NutriLens extracts the values. You check them and fix anything that looks off.' },
   { title: 'Get your analysis', text: 'See your match score, nutrient levels, ingredient notes and allergen warnings.' },
   { title: 'Save and compare', text: 'Keep the scan in your history and compare it with another product.' },
+];
+
+const PLANNED_STEPS = [
+  { title: 'Photograph the label', text: 'Take a photo or upload one. Blurry or unreadable photos are caught early.' },
+  { title: 'Read it', text: 'NutriLens reads the food label photo directly and returns nutrition values and ingredients for you to check.' },
+  { title: 'Check it', text: 'Allergens, marketing claims and serving sizes are checked with fixed, visible rules.' },
+  { title: 'Understand it', text: 'Your personal match score is calculated with fixed rules and comes with a “Why” panel that explains your results.' },
 ];
 
 const LEVELS = [
@@ -64,7 +72,7 @@ export default function Landing() {
       <section className="hero" aria-labelledby="hero-title">
         <div className="nl-container hero__inner">
           <div className="hero__copy">
-            <p className="nl-eyebrow">AI-powered food label intelligence</p>
+            <p className="nl-eyebrow">Food label intelligence</p>
             <h1 id="hero-title" className="hero__title">See what’s really on the label.</h1>
             <p className="hero__lead">
               Understand nutrition. Discover ingredients. Make better food choices. NutriLens reads a packaged
@@ -115,6 +123,27 @@ export default function Landing() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      <section className="section" id="how-nutrilens-works" aria-labelledby="plan-title">
+        <div className="nl-container plan">
+          <div>
+            <p className="nl-eyebrow">Planned</p>
+            <h2 id="plan-title" className="plan__title">How NutriLens will work</h2>
+            <ol className="plan__list">
+              {PLANNED_STEPS.map((step, index) => (
+                <li className="plan__item" key={step.title}>
+                  <span className="plan__number" aria-hidden="true">{index + 1}</span>
+                  <div>
+                    <h3 className="plan__item-title">{step.title}</h3>
+                    <p>{step.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <ScanPreview />
         </div>
       </section>
 
