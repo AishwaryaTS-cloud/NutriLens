@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://nutrilens-api-1wol.onrender.com/api/$1"
+    }
+  ]
+}
